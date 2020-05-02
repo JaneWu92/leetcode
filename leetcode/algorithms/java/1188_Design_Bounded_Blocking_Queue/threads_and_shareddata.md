@@ -7,5 +7,5 @@
 ### lock and monitor
 
 
-reference:
+reference:<br/>
 https://www.javaworld.com/article/2076971/how-the-java-virtual-machine-performs-thread-synchronization.html
