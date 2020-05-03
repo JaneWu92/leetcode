@@ -31,3 +31,21 @@ You can see here that the trigger condition is different:<br/>
 https://howtodoinjava.com/java/multi-threading/multithreading-difference-between-lock-and-monitor/
 https://wiki.openjdk.java.net/display/HotSpot/Synchronization
 
+###threads & shared data<br/>
+|memory type|stored data type|shared or not|
+|----|----|----|
+|stack|primitive types and object references|not shared by threads|
+|heap|objects|shared by threads|
+|method area|class variables(compared to object variables)|shared by threads|
+
+reference:<br/>
+https://www.javaworld.com/article/2076971/how-the-java-virtual-machine-performs-thread-synchronization.html
+
+###variable vs object<br/>
+Variable is a reference that can change at anytime. Just like an address.<br/>
+Object is an instance of a class in java.<br/>
+Like below, foo is a variable and it references an object which is an instance of MyClass.<br/>
+
+```
+foo = new MyClass()
+```
