@@ -144,3 +144,87 @@ class LRUCache {
     }
 }
 ```
+Solution 3:
+<br/>Pass
+```java
+import java.util.*;
+
+class LRUCache {
+    /**
+     * use queue.push, queue.pop to maintain the order
+     * get/put both need queue.push
+     * one problem is that there will be same key updated.
+     * so need an extra countMap to maintain the count.
+     * 1)pop 2)countMap value -1 by key.
+     * only if value = 0, can treat it as least used.
+     * if not, keep popping next elememt.
+     */
+    Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+    Queue<Integer> queue = new LinkedList<Integer>();
+    Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+
+    int capacity = 0;
+    int size = 0;
+    int maxWeight = 0;
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public int get(int key) {
+        if (!map.containsKey(key)) {
+            return -1;
+        }
+        incValueByKey(key, countMap);
+        queue.add(key);
+        return map.get(key);
+    }
+
+    public void put(int key, int value) {
+        if (map.containsKey(key)) {
+            map.put(key, value);
+            queue.add(key);
+            incValueByKey(key, countMap);
+            return;
+        }
+        if (size == capacity) {
+            //evict least used keys
+            int leastUsedKey = -1;
+            while(true){
+                int tmpKey = queue.poll();
+                boolean flag = decValueByKeyAndSeeIfZero(tmpKey, countMap);
+                if(flag){
+                    leastUsedKey = tmpKey;
+                    break;
+                }
+            }
+            map.remove(leastUsedKey);
+            countMap.remove(leastUsedKey);
+            //put new keys
+            map.put(key, value);
+            queue.add(key);
+            incValueByKey(key, countMap);
+        } else {
+            map.put(key, value);
+            size++;
+            queue.add(key);
+            incValueByKey(key, countMap);
+        }
+    }
+
+    private void incValueByKey(int key, Map<Integer, Integer> map) {
+        if (!map.containsKey(key)) {
+            map.put(key, 1);
+        } else {
+            int oriV = map.get(key);
+            map.put(key, oriV + 1);
+        }
+    }
+
+    private boolean decValueByKeyAndSeeIfZero(int key, Map<Integer, Integer> map) {
+        int oriV = map.get(key);
+        map.put(key, oriV - 1);
+        return (oriV - 1 == 0) ? true : false;
+    }
+}
+```
