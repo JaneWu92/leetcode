@@ -1,11 +1,11 @@
-###atomic
+### atomic
 (OS)<br/>
 Atomic means no other threads can interrupt me and access same data with me.<br/>
 They need to wait for me when i am fished.<br/>
 Example:<br/>
 Compare-and-set instruction in operation system.<br/>
 (No other threads can access the word I am not access only after this instruction completes)
-###lock & monitor<br/>
+### lock & monitor<br/>
 (Java)<br/>
 **Lock**<br/>
 Lock is a memory place at java object header which may contain the information that what thread is owning this object.<br/>
@@ -31,7 +31,7 @@ You can see here that the trigger condition is different:<br/>
 https://howtodoinjava.com/java/multi-threading/multithreading-difference-between-lock-and-monitor/
 https://wiki.openjdk.java.net/display/HotSpot/Synchronization
 
-###threads & shared data<br/>
+### threads & shared data<br/>
 |memory type|stored data type|shared or not|
 |----|----|----|
 |stack|primitive types and object references|not shared by threads|
@@ -41,7 +41,7 @@ https://wiki.openjdk.java.net/display/HotSpot/Synchronization
 reference:<br/>
 https://www.javaworld.com/article/2076971/how-the-java-virtual-machine-performs-thread-synchronization.html
 
-###variable vs object<br/>
+### variable vs object<br/>
 Variable is a reference that can change at anytime. Just like an address.<br/>
 Object is an instance of a class in java.<br/>
 Like below, foo is a variable and it references an object which is an instance of MyClass.<br/>
