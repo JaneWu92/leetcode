@@ -146,6 +146,7 @@ class LRUCache {
 ```
 Solution 3:
 <br/>Pass
+<br/>time complexity: O(n)
 ```java
 import java.util.*;
 
