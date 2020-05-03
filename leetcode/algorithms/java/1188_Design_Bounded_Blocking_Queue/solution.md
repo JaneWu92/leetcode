@@ -1,10 +1,6 @@
 Solution 1: Use synchronized and wait and notify<br/>
 Result: invalid solution with time limitation<br/>
-<br/>
-Question:<br/>
-What is synchronized and wait and notify indeed?<br/>
-
-
+And second time this solution became valid...
 ```
 import java.util.LinkedList;
 import java.util.List;
