@@ -87,3 +87,59 @@ class LRUCache {
 ```
 
 Solution 2:
+<br/>Not Pass
+<br/>Time Limit Exceeded
+```$xslt
+import java.util.*;
+
+class LRUCache {
+    Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+    //<key, weight>
+    Map<Integer, Integer> weightMap = new HashMap<Integer, Integer>();
+
+    int capacity = 0;
+    int size = 0;
+    int maxWeight = 0;
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public int get(int key){
+        if(!map.containsKey(key)){
+            return -1;
+        }
+        weightMap.put(key, ++maxWeight);
+        return map.get(key);
+    }
+
+    public void put(int key, int value){
+        if(map.containsKey(key)){
+            map.put(key, value);
+            weightMap.put(key, ++maxWeight);
+            return;
+        }
+        if(size == capacity){
+            //evict least used keys
+            Object[] ori = weightMap.values().toArray();
+            Arrays.sort(ori);
+            int leastWeight = (int)ori[0];
+            int leastUsedKey = -1;
+            for(int k: weightMap.keySet()){
+                if(weightMap.get(k) == leastWeight){
+                    leastUsedKey = k;
+                }
+            }
+            map.remove(leastUsedKey);
+            weightMap.remove(leastUsedKey);
+            //put new keys
+            map.put(key, value);
+            weightMap.put(key, ++maxWeight);
+        }else{
+            map.put(key, value);
+            size++;
+            weightMap.put(key, ++maxWeight);
+        }
+    }
+}
+```
