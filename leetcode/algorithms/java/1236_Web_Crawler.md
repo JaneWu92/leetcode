@@ -1,6 +1,6 @@
 Solution 1: No idea why invalid<br/>
 Not pass<br/>
-```
+```java
 import java.util.*;
 
 public class Solution {
@@ -47,7 +47,7 @@ public class Solution {
 
 Solution 2:<br/>
 Pass<br/>
-```
+```java
 import java.util.*;
 
 public class Solution {

@@ -1,7 +1,7 @@
 Solution 1: Use synchronized and wait and notify<br/>
 Result: invalid solution with time limitation<br/>
 And second time this solution became valid...
-```
+```java
 import java.util.LinkedList;
 import java.util.List;
 

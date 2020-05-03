@@ -1,7 +1,7 @@
 Solution 1: 
 <br/>Not Pass
 <br/>Didn't read the requirement carefully and try to achieve a Least Totally Used version
-```
+```java
 import java.util.*;
 
 class LRUCache {
@@ -89,7 +89,8 @@ class LRUCache {
 Solution 2:
 <br/>Not Pass
 <br/>Time Limit Exceeded
-```$xslt
+
+```java
 import java.util.*;
 
 class LRUCache {
