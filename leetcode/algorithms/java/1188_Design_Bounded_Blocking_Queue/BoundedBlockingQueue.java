@@ -34,7 +34,6 @@ class BoundedBlockingQueue {
         if(size == capacity - 1 ) {
         	notifyAll();
         }
-        System.out.println(result);
         return result;
     }
     
