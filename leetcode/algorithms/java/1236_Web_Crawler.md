@@ -1,4 +1,5 @@
 Solution 1: No idea why invalid<br/>
+Not pass<br/>
 ```
 import java.util.*;
 
@@ -41,5 +42,36 @@ public class Solution {
         }
         return cUrls;
     }
+}
+```
+
+Solution 2:<br/>
+Pass<br/>
+```
+import java.util.*;
+
+public class Solution {
+    Set<String> res = new HashSet<String>();
+    public List<String> crawl(String startUrl, HtmlParser htmlParser) {
+        String host = getHostname(startUrl);
+        res.add(startUrl);
+        dfs(startUrl, host, htmlParser);
+        return new ArrayList<String>(res);
+    }
+
+    private void dfs(String url, String host, HtmlParser htmlParser){
+        List<String> first = htmlParser.getUrls(url);
+        for(String u: first){
+            if(!getHostname(u).equals(host) || res.contains(u)){
+                continue;
+            }
+            res.add(u);
+            dfs(u, host, htmlParser);
+        }
+    }
+    private String getHostname(String url) {
+        return url.split("/")[2];
+    }
+
 }
 ```
