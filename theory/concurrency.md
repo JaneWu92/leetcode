@@ -49,3 +49,34 @@ Like below, foo is a variable and it references an object which is an instance o
 ```
 foo = new MyClass()
 ```
+### make threads run in particular order
+How to make threads run in one specific order?  
+**3 threads in order**  
+```java
+Semaphor firstSm = new Semaphor(1);
+Semaphor secondSm = new Semaphor(0);
+Semaphor thirdSm = new Semaphor(0);
+
+Thread1:
+while(true){
+    firstSm.acquire();
+    business_logic();
+    secondSm.release();
+}
+
+Thread2:
+while(true){
+    secondSm.acquire();
+    business_logic();
+    thirdSm.release();
+}
+
+Thread3:
+while(true){
+    thirdSm.acquire();
+    business_logic();
+    firstSm.release();
+}
+
+
+```
