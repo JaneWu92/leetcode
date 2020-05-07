@@ -1,6 +1,8 @@
 Solution 1:  
 No pass.  
-This question killed me......
+This question killed me......  
+And this solution is totally wrong!!...  
+It should not choose in order. It should choose by the biggest occurence.
 
 ```java
 import java.util.*;
