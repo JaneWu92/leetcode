@@ -91,3 +91,57 @@ class Solution {
 }
 
 ```
+Solution2:  
+fail again!!!
+```java
+import java.util.*;
+import java.util.Map.Entry;
+
+public class Solution {
+    public int[] rearrangeBarcodes(int[] barcodes) {
+        int[] result = new int[barcodes.length];
+        int idxResult = -1;
+        Comparator<Entry<Integer, Integer>> com = (Entry<Integer, Integer> e1, Entry<Integer, Integer> e2) -> e1.getValue().compareTo(e2.getValue());
+        PriorityQueue<Entry<Integer, Integer>> queue = new PriorityQueue<Entry<Integer, Integer>>(com);
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for (int i : barcodes) {
+            map.put(i, map.getOrDefault(i, 0) + 1);
+        }
+        for (Entry e : map.entrySet()) {
+            queue.add(e);
+        }
+        LinkedList<Entry<Integer, Integer>> ents = new LinkedList<Entry<Integer, Integer>>();
+        while(true){
+            Entry<Integer, Integer> e = queue.poll();
+            if(e == null){
+                break;
+            }
+            ents.addFirst(e);
+        }
+
+        int idxLeft = 0;
+        int idxRight = 1;
+        while (idxRight < ents.size() && idxLeft < ents.size()) {
+            while (ents.get(idxLeft).getValue() != 0 && ents.get(idxRight).getValue() != 0) {
+                result[++idxResult] = ents.get(idxLeft).getKey();
+                ents.get(idxLeft).setValue(ents.get(idxLeft).getValue() - 1);
+                result[++idxResult] = ents.get(idxRight).getKey();
+                ents.get(idxRight).setValue(ents.get(idxRight).getValue() - 1);
+            }
+            if (ents.get(idxLeft).getValue() != 0) {
+                idxRight++;
+            } else if (ents.get(idxRight).getValue() != 0) {
+                idxLeft = idxRight;
+                idxRight = idxRight + 1;
+            } else {
+                idxLeft = idxRight + 1;
+                idxRight = idxLeft + 1;
+            }
+        }
+        if (idxLeft < ents.size() && ents.get(idxLeft).getValue() != 0) {
+            result[++idxResult] = ents.get(idxLeft).getKey();
+        }
+        return result;
+    }
+}
+```
