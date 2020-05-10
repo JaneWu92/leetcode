@@ -145,3 +145,66 @@ public class Solution {
     }
 }
 ```
+Solution3:  
+Pass  
+Time Complexity: nlog(n)  
+Space Complexity: n  
+This solution use a priority queue to make the count in order specifically.  
+However, it's no need to have a full order, so there's a waste here.  
+What it needs is just a biggest one to put it odd position. And then for others just put in the rest positions.
+```java
+import java.util.*;
+import java.util.Map.Entry;
+
+public class Solution {
+    public int[] rearrangeBarcodes(int[] barcodes) {
+        int[] result = new int[barcodes.length];
+        int idxResult = -1;
+        Comparator<Entry<Integer, Integer>> com = (Entry<Integer, Integer> e1, Entry<Integer, Integer> e2) -> e1.getValue().compareTo(e2.getValue());
+        PriorityQueue<Entry<Integer, Integer>> queue = new PriorityQueue<Entry<Integer, Integer>>(com);
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for (int i : barcodes) {
+            map.put(i, map.getOrDefault(i, 0) + 1);
+        }
+        for (Entry e : map.entrySet()) {
+            queue.add(e);
+        }
+        LinkedList<Entry<Integer, Integer>> keyCountList = new LinkedList<Entry<Integer, Integer>>();
+        while(true){
+            Entry<Integer, Integer> e = queue.poll();
+            if(e == null){
+                break;
+            }
+            keyCountList.addFirst(e);
+        }
+
+        int idx = 0;
+        int idxKeyCountList = 0;
+        while(idx < result.length){
+            if(keyCountList.get(idxKeyCountList).getValue() != 0){
+                int key = keyCountList.get(idxKeyCountList).getKey();
+                int value = keyCountList.get(idxKeyCountList).getValue();
+                result[idx] = keyCountList.get(idxKeyCountList).getKey();
+                keyCountList.get(idxKeyCountList).setValue(keyCountList.get(idxKeyCountList).getValue() - 1);
+                idx += 2;
+            }else{
+                idxKeyCountList++;
+            }
+
+        }
+        idx = 1;
+        while(idx < result.length){
+            if(keyCountList.get(idxKeyCountList).getValue() != 0){
+                int key = keyCountList.get(idxKeyCountList).getKey();
+                int value = keyCountList.get(idxKeyCountList).getValue();
+                result[idx] = keyCountList.get(idxKeyCountList).getKey();
+                keyCountList.get(idxKeyCountList).setValue(keyCountList.get(idxKeyCountList).getValue() - 1);
+                idx += 2;
+            }else{
+                idxKeyCountList++;
+            }
+        }
+        return result;
+    }
+}
+```
