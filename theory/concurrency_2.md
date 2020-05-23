@@ -1,5 +1,5 @@
-### synchronized & Reentranlock  
-Basically they are same. Different is that Reentranlock has more ability. It can provide:  
+### synchronized & Reentrantlock  
+Basically they are same. Different is that Reentrantlock has more ability. It can provide:  
 1. trylock  
 2. reenter mechanism  
 3. fair lock  
