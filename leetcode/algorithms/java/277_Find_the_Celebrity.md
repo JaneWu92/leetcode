@@ -66,3 +66,32 @@ public class Solution extends Relation {
     }
 }
 ```
+Solution 3:  
+Pass  
+The key for this solution is that once a know b, then a will not be celebrity, and b has possibility to be celebrity.
+And this has transitivity.
+so it can be transmitted to the last item.  
+And this "last" item will only be one.  
+So beautiful.  
+And then for this "last" item, we go to have a check if it's really a celebrity.  
+```java
+/* The knows API is defined in the parent class Relation.
+      boolean knows(int a, int b); */
+
+public class Solution extends Relation {
+    public int findCelebrity(int n) {
+        int result = 0;
+        for (int i = 0; i < n; i++) {
+            if(result!=i && knows(result, i)){
+                result = i;
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (result!=i && (!knows(i, result) || knows(result, i))) {
+                return -1;
+            }
+        }
+        return result;
+    }
+}
+```
