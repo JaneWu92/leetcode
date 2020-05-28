@@ -24,6 +24,6 @@ It's because index's essence is sorting.
 What about concatenated index(multi-column index)?  
 Concatenated index can only be used when there are leading columns in the where condition.  
 Because the concatednated index is firstly index with first column, and secondly indexed with second column.  
-
+Another thing need to be noted is that in the where condition, the column order doesn't matter.
 
   
