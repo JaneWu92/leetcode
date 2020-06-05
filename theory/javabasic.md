@@ -44,13 +44,28 @@ compareTo: Collection.binarySearch(list, targetObject);
 Java is a very popular and widely-used language.  
 It's well-known because of its "write once and run everywhere".  
 This feature is because of its JVM.  
-So in fact java code is running first in the virtual machine and then the machine will translate the  "java byte code" into machine code.  
+So in fact java code is running first in the virtual machine and then the machine will translate the  "java byte code" into native machine code.  
 This is why java is called the interpreted language which corresponds to compiled language.  
-However, the JIT(Just in time compiler) is in fact more and more used now in Java which can recognize hot spot code and compile it to machine code.  
+However, the JIT(Just in time compiler) is in fact more and more used now in Java which can recognize hot spot code and compile it to native machine code.  
 And here comes the question, if "write once and run everywhere" is based on the "java byte code", what will happen if there some "JIT" machine code.  
 Here's the thing, the JIT is in the progress of "running" bytecode. If not JIT, then it needs to interprete each bytecode.  
 And with JIT, JVM knows what bytecode needs to be complied to machine code first. And then it can be directly used.  
 
+**javac vs JIT**
+javac: compile java source code to java bytecode  
+JIT: java just in time compiler. compile java bytecode to native machine code at runtime before executing(JVM interpretes  the bytecode into native machine code) it.
+
+**Exception vs Error**
+Exception is something that can be recovered while error not.  
+So exception needs to be taken care very carefully.  
+Exception like nullpointer exception, index out of bound exception. Error like OOM error.  
+Compiler exception vs runtime exception  
+I think it may be different because of one is checked exception and one is unchecked.  
+And unchecked exception is runtime exception.  
+They both implement Throwable.  
+---|---|---|---
+Linage error| vitual machine error| checked exception| runtime exception
+NoClassDefFoundError| OOM Error| IO Exception |NullPointer Exception
 
 
 
