@@ -68,6 +68,16 @@ They both implement Throwable.
 3. checked exception: IO exception
 4. runtime exception: NullPointerException, IndexOutOfBoundException, ClassCastException
 
+### final, finally, finalize
+final can be used in fields or method or class.  
+in fields: this field can't be modified once initialized.
+in method: this method can't be override by child class.
+in class: this class can't be extends.  
+finally: the finally block always executes when the try block exists.  
+So it ensures that the resource close can be handled even there's exception in try block.
+finalize: when an object is garbage collected, the finalize method will be called. It's for performing some resource close. 
+It's recommend not to override finalize method because it may have many overhead to garbage collection.
+
 
 
 
