@@ -40,7 +40,7 @@ So that 2 equal object may go to different bucket of hashmap.
 hashcode: hashset, hashmap  
 compareTo: Collection.binarySearch(list, targetObject);
 
-**What do you think of Java platform**
+### What do you think of Java platform
 Java is a very popular and widely-used language.  
 It's well-known because of its "write once and run everywhere".  
 This feature is because of its JVM.  
@@ -55,7 +55,7 @@ And with JIT, JVM knows what bytecode needs to be complied to machine code first
 javac: compile java source code to java bytecode  
 JIT: java just in time compiler. compile java bytecode to native machine code at runtime before executing(JVM interpretes  the bytecode into native machine code) it.
 
-**Exception vs Error**
+### Exception vs Error
 Exception is something that can be recovered while error not.  
 So exception needs to be taken care very carefully.  
 Exception like nullpointer exception, index out of bound exception. Error like OOM error.  
@@ -63,9 +63,11 @@ Compiler exception vs runtime exception
 I think it may be different because of one is checked exception and one is unchecked.  
 And unchecked exception is runtime exception.  
 They both implement Throwable.  
----|---|---|---
-Linage error| vitual machine error| checked exception| runtime exception
-NoClassDefFoundError| OOM Error| IO Exception |NullPointer Exception
+1. Linage error: NoClassDefFoundError
+2. vitual machine error: OOM Error, StackOverflow Error
+3. checked exception: IO exception
+4. runtime exception: NullPointerException, IndexOutOfBoundException, ClassCastException
+
 
 
 
