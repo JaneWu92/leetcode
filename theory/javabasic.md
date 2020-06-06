@@ -78,9 +78,10 @@ So it ensures that the resource close can be handled even there's exception in t
 finalize: when an object is garbage collected, the finalize method will be called. It's for performing some resource close. 
 It's recommend not to override finalize method because it may have many overhead to garbage collection.
 
+### java reference: soft, weak, phantom reference
+**why we need different type of reference**
 
-
-
+**what are they exactly**
 
 
 
