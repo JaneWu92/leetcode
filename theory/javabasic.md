@@ -80,6 +80,10 @@ It's recommend not to override finalize method because it may have many overhead
 
 ### java reference: soft, weak, phantom reference
 **why we need different type of reference**
+Java is known of it's dynamic garbage collection.  
+And the key point of garbage collection is to release the objects that we think it's okay to release to make some room.  
+The straightforward way is, when there's no reference to an object it will be marked as okay-to-release.  
+And then it will be 
 
 **what are they exactly**
 
