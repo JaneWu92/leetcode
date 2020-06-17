@@ -87,6 +87,36 @@ And then it will be
 
 **what are they exactly**
 
+### override vs overload
+method signature: method name + parameter type/length 
+return type is not included here, means that if 2 methods only differs at return type, compiler will output error
+override: subclass has same signature as super class  
+overload: in one class, there are 2 methods has same name but different parameter type/length
+
+### static and dynamic binding
+binding: link a method to a class/instance  
+static binding: compile bind. at compile time it's decided which class/instance this method is linked  
+dynamic binding: only at runtime it will be figured out which class/instance this method is bound to  
+why there are dynamic binding: it's in the java polymorphism.  
+static binding: overloaded, private, static, final methods. type of reference  
+dynamic binding: overriden methods. actual object
+
+### java virtual function
+In java, except for static function, final function, private function, all others are virtual function.  
+virtual function this concept in fact are in the polymorphism. so if a function can be override, in this extend it's a virtual function.  
+**java virtual method table**
+in jvm, each class will have a virtial method table. which is an array has an index and the method itself.  
+here's 2 concept, reference type and object type.  
+Father o = new Children();  // reference type is father and object type is children 
+o.talk(); // talk method is overriden by children, and is public non-static non final method  
+because JVM will see that talk is virtual method, it then note down this method index in Father class's virtual table  
+then go to the stack to see the o's real object type.  
+when it find that it's children, then it will go to the same index of the children's virtual method table.  
+This is how dynamic binding work.  
+
+
+
+
 
 
 

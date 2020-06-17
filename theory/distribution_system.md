@@ -13,6 +13,8 @@ so the CAP is: when the network partition failure fails, what we want to decide 
 1. proceed with the operation so that availability is provided but there's there may be inconsistency
 2. cancel the operation and so the availability is decreased but the consistency is ensured.  
 
+**it's about read and write**
+
 ### Why we come to Nosql
 Nosql vs relational database  
 Relational data has acid constraint, it means that the write and read will be slow.  
@@ -21,6 +23,28 @@ I think the biggest item here is that the data volume become bigger and bigger, 
 **The key point is scale out**
 The good side is the load is distributed.  
 The side effect is the non-acid protect.
+
+### read-write split
+master-slave mode. master for write and slave for read.  
+pros:  
+read can be load balance
+cons:  
+write can not be load balance  
+important read may have outdated data in slave  
+  
+master-master mode  
+write and read can all be load balance
+while inconsistency may be more serious than master-slave mode  
+there's no single-point faiure.  
+
+### table split vs database split
+table split:  
+business split  
+horizontal split:  range route, hash route(not easy to scale out when there's new table), config route
+vertical split： split out some less-use column   
+  
+database split:  
+transaction can only be provided by ourselves  
 
 
 
