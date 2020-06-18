@@ -114,10 +114,22 @@ then go to the stack to see the o's real object type.
 when it find that it's children, then it will go to the same index of the children's virtual method table.  
 This is how dynamic binding work.  
 
+### Java GC
+**how to decide when an object is dead**
+1. reference counting
+2. root set of reference
+reference counting:  can not prevent isolated island  
+if a and b reference each other, they should be all dead but they are all alive.  
+root set of reference: from top to bottom, and if you are not find by the very root reference, you are dead.  
+root set:
+1. active thread
+2. local variables
+3. static variables
 
-
-
-
+### happens-before
+This is a relation to denote partial order.  
+If an action A has the relation of "happens-before" B,  
+then I don't care how you physically execute the action, but you need to make sure that the result guarantee the "happens beore" relation.  
 
 
 
