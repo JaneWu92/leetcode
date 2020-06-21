@@ -41,5 +41,16 @@ Fixing by get one connection for each thread by connection pool.
 Close pool vs close connection:  
 Pool close is physical close and connection close is return to pool.  
 
+### 锁的升级
+偏向锁，轻量锁，重量锁  
+偏向锁：  
+1. 加锁：看锁标志是否为“01”，CAS在markword里的字段直接填入Thread ID,把”是否偏向“设为1。如果成功就是获取到了，如果不成功就做锁的撤销 
+2. 锁的撤销：不会主动释放。而是等其他竞争的线程来触发。并且等到程序到安全点的时候。
+    - 如果检查这个threadid已经不在用这个锁了，把threadid去掉
+    - 如果还在用，就升级成轻量级锁。把锁标志设为“00”。把mark word拷贝到在用的thread的栈上，作为lock record。然后把mark word上的owner填入这个lock record的指针。
 
-
+轻量锁:  
+把mark word拷贝到自己的栈上。然后CAS把mark word上的owner填入自己栈的lock record的指针。  
+成功就获得锁。不成功就自旋等一会儿。等了一定时间还没到，就把这个锁升级成重量级锁。  
+  
+重量级锁：  
