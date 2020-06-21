@@ -146,3 +146,42 @@ assembly code: symbolic naming added for machine code (mnemonic like MOV, LOAD)
 ### what does JVM do exactly
 JVM is java virtual machine for short, so to answer this question we should answer first:  
 what does machine do exactly when execute machine code.  
+![alt text](pic_javabasic/process virtual address.PNG)  
+what does jvm do:  
+1. a memory abstraction
+2. garbage collection automation
+  
+so if it's C,  
+1. the kernal will create a new process  
+2. the executable file(machine code) will be loaded into memory  
+3. it will begin to run
+
+And if it's java, 
+1. the kernal will create a new process  
+2. the JVM will be loaded into memory
+3. JVM will begin to run the class loading and the main running  
+4. JVM will translate the Java byte code into machine code and running  
+5. Same java byte code will be translated to different machine-specific machine code  
+6. for java programer there's no need to allocate and release memory like C programer, JVM will help you
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+

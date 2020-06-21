@@ -1,5 +1,6 @@
 Book:  
-Computer Systems. A Programmer’s Perspective [3rd ed.] 
+Computer Systems. A Programmer’s Perspective [3rd ed.]  
+page 59
 ### binary vs ASCII
 All files are at heart binary files -- that is, a collection of 1s and 0s.  
 And ASCII is one of the way that use numbers to represent the number and letters.  
@@ -34,7 +35,14 @@ assembly code
 ```
 ![alt text](pic_computer_systems/hardware organization.PNG)
 
+let's say we have a hello file which is compiled as executable file.  
+and when we type "./hello" in bash and then click enter key, it will be executed and print out "hello world".  
 
+### Process
+Process it the abstraction of OS on CPU, main memory and IO devices.  
+So it can provide the illusion that each program is the only one running on the system.  
+And the context swith is the mechanism to concurrently run multiple processes.  
+So the context involve, content of main memory, PC, register files.  
 
 
 
