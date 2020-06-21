@@ -132,4 +132,17 @@ If an action A has the relation of "happens-before" B,
 then I don't care how you physically execute the action, but you need to make sure that the result guarantee the "happens beore" relation.  
 
 
+### assembler & assembly language
+assembler is bound to specific computer architechture.  
+and each assembler has its own assembly language.  
+compiler: high level source code to machine code  
+assember: assembly code(symbolic machine code) to machine code  
 
+### machine instruction vs machine code
+machine code: 10101001  
+machine instruction: same with machine code
+assembly code: symbolic naming added for machine code (mnemonic like MOV, LOAD) 
+
+### what does JVM do exactly
+JVM is java virtual machine for short, so to answer this question we should answer first:  
+what does machine do exactly when execute machine code.  
