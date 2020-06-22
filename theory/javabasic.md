@@ -173,7 +173,14 @@ blocked: waiting for other thread to release the lock
 wait: waiting for other thread to notify it  
 
 ### Thread sleep vs wait
-whether release the lock or not
+sleep: TIMED_WAITING, not release lock  
+wait: WAITING, release lock
+
+### Thread context switching
+1. 当前任务时间片用完
+2. IO阻塞(read)
+3. 抢占资源无果(synchronized)
+4. 用户代码挂起当前任务（sleep, wait, join）
 
 
 
