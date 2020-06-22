@@ -164,10 +164,16 @@ And if it's java,
 5. Same java byte code will be translated to different machine-specific machine code  
 6. for java programer there's no need to allocate and release memory like C programer, JVM will help you
 
+### runtime vs compile time exception
+Here's the bottom line guideline: If a client can reasonably be expected to recover from an exception, make it a checked exception. If a client cannot do anything to recover from the exception, make it an unchecked exception.  
+The next question might be: "If it's so good to document a method's API, including the exceptions it can throw, why not specify runtime exceptions too?" Runtime exceptions represent problems that are the result of a programming problem, and as such, the API client code cannot reasonably be expected to recover from them or to handle them in any way. Such problems include arithmetic exceptions, such as dividing by zero; pointer exceptions, such as trying to access an object through a null reference; and indexing exceptions, such as attempting to access an array element through an index that is too large or too small.
 
+### Thread blocked vs wait
+blocked: waiting for other thread to release the lock  
+wait: waiting for other thread to notify it  
 
-
-
+### Thread sleep vs wait
+whether release the lock or not
 
 
 

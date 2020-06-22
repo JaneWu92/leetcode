@@ -54,3 +54,29 @@ Pool close is physical close and connection close is return to pool.
 成功就获得锁。不成功就自旋等一会儿。等了一定时间还没到，就把这个锁升级成重量级锁。  
   
 重量级锁：  
+轻量级锁其实还是处在自旋，也就是线程没有挂起。就没有涉及到线程的切换。没有涉及到内核态和用户态的切换。代价就比较小。  
+但是重量级锁，利用了monitor，没拿到的线程都要进入wait状态。
+
+A monitor consists of a mutex (lock) object and condition variables.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
