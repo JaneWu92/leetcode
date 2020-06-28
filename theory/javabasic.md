@@ -182,10 +182,17 @@ wait: WAITING, release lock
 3. 抢占资源无果(synchronized)
 4. 用户代码挂起当前任务（sleep, wait, join）
 
+### 线程是什么
+线程是OS调度的最小单位。有自己的栈空间，寄存器，本地存储
 
+### threadlocal
+provide thread safe between threads  
+but what if i don't have thread local, what will happen?  
+thread has its own stack, so what will its field locate?
 
-
-
+**local and global variables**
+local variable is inside function.  
+global variable are declared outside any cuntion and can be accessed on any function.  
 
 
 
