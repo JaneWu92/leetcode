@@ -86,6 +86,68 @@ no idea
 countdownlatch.await: all threads blocks at count down to become 0 
 cyclicbarrier.await: all threads blocks at count down to become 0, and then the cycic barrier will reset to original nunmber again
 
+### cpu, core, hyper-thread
+cpu can have several cores  
+core: its own ALU, registers, PC  
+hyper-thread: one ALU and several registers + PC(so that don't need the context switch)
+
+### @? JVM本地变量表和CPU的寄存器类似
+### @? What is DMA
+direct memory access
+
+### @? 缓存一致性
+什么时候有使用到？如果有的话，还有多线程的问题吗？
+
+### @？intel lock 汇编指令
+hotspot的volatile和synchronize都用的lock来实现  
+为什么可以实现
+volatile怎么实现可见性和指令不可重排的
+
+###
+因为有缓存一致性机制，所以其实在cpu层面，是不存在共享数据竞争的。
+多线程下的共享数据竞争，是因为指令重排，在编程习惯上，我们依赖于高层语言的代码执行顺序。却不知道他们在CPU层面是会被重排序的。
+Java里面的volatile，其实就是禁止指令重排。用了内存屏障，前面的指令都会被执行完毕，再执行接下里的指令。防止乱序。
+多线程下的共享资源竞争，更多的是因为没有原子性。比如说对同一个数的a++。他们都读到a，都加1，都往回set，结果就是1而不是2。这个是因为a的读取和plus和写入不是原子性的。所以要加同步锁。  
+而volatile跟同步的关系是，
+
+
+### 缓存一致性保证了内存可见性吗
+不。有两方面的原因：
+1. 在寄存器里待太久
+2. 在store buffer(cpu和L1 cache之间的另一层缓存)待太久。
+以上两者，都是还没有到缓存，所以被缓存一致性照顾不到的。
+**内存屏障**可以解决这个问题
+内存屏障是用来保证屏障之前的指令要在屏障之后的指令前执行结束。  
+所以他意味着，load都要load完，store也要store完。注意这里目标说的都是到主存。而不是寄存器或者store buffer或者cache。  
+java里面的volatile就是通过内存屏障来实现的。  
+
+
+### 线程与纤程
+线程要用户态和内核态切换，所以是重量级的。  
+纤程只在用户态，是轻量级的。
+
+## @? 中断，软中断，硬中断
+
+### class loading
+loading, linking, initializing
+it's all about class, not about object. 
+in linking, static field will be set to default value, in initializing stat, the static field will be initialized. 
+if you want to hack the parent-delegation loading, you need to override the loadClass method.
+
+### @? 热加载，热部署
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
