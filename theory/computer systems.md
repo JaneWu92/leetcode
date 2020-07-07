@@ -119,7 +119,13 @@ Java里面的volatile，其实就是禁止指令重排。用了内存屏障，�
 **内存屏障**可以解决这个问题
 内存屏障是用来保证屏障之前的指令要在屏障之后的指令前执行结束。  
 所以他意味着，load都要load完，store也要store完。注意这里目标说的都是到主存。而不是寄存器或者store buffer或者cache。  
+所以，内存屏障保证了指令的有序性。  
 java里面的volatile就是通过内存屏障来实现的。  
+
+
+### 硬件内存屏障
+sfence, lfence, mfence
+lock（是一个full barrier）: 加在其他指令前面。保证原子性。lock add a。保证只有我修改这个a
 
 
 ### 线程与纤程
@@ -136,7 +142,53 @@ if you want to hack the parent-delegation loading, you need to override the load
 
 ### @? 热加载，热部署
 
- 
+### @? 缓存一致性保证
+1. 总线锁
+    就相当于串行访问共享资源。前提是，你这个锁的释放，是在你资源完全访问完（不能说改过后却还没刷回主存）。
+2. MESI协议（缓存锁）
+    有些无法被缓存的数据，比如数据较大或者跨越多个缓存行的数据，依然必须使用总线锁。
+    
+### happened-before
+定义的指令间的semi-order的关系。 
+A relation between the **result** of two events.  
+If one event should happen before another event, **the result** must reflect that, even if those events are in reality executed out of order.  
+包含两个方面： 
+1. in time 
+2. in memory
+
+注意的点： 
+一个是，这个order的关系是对于进程内来说的，而不是局限于线程内。  
+一个是，这个order不仅要反映时间，还要反映内存可见性。  
+
+例子： 
+happened-before in java memory model:
+1. single thread rule
+2. monitor lock rule
+3. volatile variable rule
+4. thread start rule
+5. thread join rule
+  
+for example, monitor lock rule. in fact it's a mechanism that make the multithread "single thread" when they try to access shared data.  
+so it's quite easy to understand the "happened-before" in the monitor lock.  
+for another example, the volatile, if one thread writes in it, then other thread must can see its reuslt.  
+It's also that kind of "order", means that I write first, and then you read.  
+the logic hiden here is that, one thread B **cares about** the result of another thread A, so B said: hey A, you must run in the order and the result that I expect.  
+And what A expect here is that:
+B should run in the order that A knows(the program lines).  
+A should see B's update.  
+This is what volatile try to achieve here.  
+
+
+### volatile 不保证 i++ 原子性
+volatile 在hotspot的实现是lock指令：锁总线。 
+只有一个线程对share data有使用权限。
+所以照理来说，它是有原子性的。
+但注意，像i++这种是没有原子性的。因为它是i = i + 1。是one read + one write.  
+volatile保证的原子性只是，only one read. Or only one write.  
+
+
+
+
 
 
 
