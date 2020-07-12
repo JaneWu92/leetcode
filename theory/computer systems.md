@@ -185,9 +185,20 @@ volatile 在hotspot的实现是lock指令：锁总线。
 所以照理来说，它是有原子性的。
 但注意，像i++这种是没有原子性的。因为它是i = i + 1。是one read + one write.  
 volatile保证的原子性只是，only one read. Or only one write.  
+volatile和内存屏障的关系： 
+用来实现volatile的lock指令是全屏障。 
 
+### synchronized 实现
+lock cmpxchg ... 
+cmpxchg应该是原语。能够保证多个线程在一个cpu上的原子性。
+lock是为了保证在多个**cpu**上
 
-
+### 对象创建过程
+1. class loading
+2. class linking(verify, preparation, resolution). in preparation will set default value to static field 
+3. class initilizing: static field set to the value and static code blcok executing
+4. new a memory for the instance
+5. instance init(constructor): set the value to fields and call constructors actions
 
 
 
