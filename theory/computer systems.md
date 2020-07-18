@@ -200,11 +200,36 @@ lock是为了保证在多个**cpu**上
 4. new a memory for the instance
 5. instance init(constructor): set the value to fields and call constructors actions
 
+### NIO
+like read()：  
+1. BIO: 线程阻塞等待内核从外围设备(File)读数据到内核空间，然后把数据从内核空间再放到用户空间。
+2. NIO: 线程发请求给内核要求数据后，就去做他的事情。
+然后不时来问一下内核数据准备好了（数据已经在内核空间了）没。
+没有就再去做他的事情，过会儿再问。有就阻塞等待数据从内核空间拷到用户空间。
+
+**多路复用multiplexing**
+都是同步I/O。用户线程需要自己去轮询问Kernal相应的fd的IO是不是已经准备好在kernal空间了。然后阻塞从kernal空间拷贝数据到用户空间。
+select()  
+传给内核一个fd list，内核会回传那些IO ready的fd list回来。然后用户程序就可以去读数据了。
+poll()
+跟select非常相似。只是使用pollfd是链式结构，没有最大连接数。但是select是2048。
+epoll()
+
+**单线程怎么实现IO的高并发**
 
 
+### 分布式锁
+同一个进程间的线程之间的锁的意义的实现是，让他们先去获得一个共享的item的使用权。  
+比如synchronized，和lock。  
+synchronized是monitor enter和monitor exit，是为了把一个object的锁头的那个位置声明为自己所有。  
+这中间有很多种方式，是一个锁升级的过程。但无论怎么样，都是为了去做这个声明。
+这是线程之间。
+而进程之间的话，比如说想控制不同的进程访问一个共享资源的顺序性。因为进程间数据是不能共享的，所以只能通过第三方介质。  
+比如redis，zookeeper，数据库。
 
 
-
+### IO缓冲流
+好处是类似于批量处理，减少和IO的交互总次数（还有内核态用户态之间的切换）。
 
 
 
