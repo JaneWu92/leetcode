@@ -231,9 +231,17 @@ synchronized是monitor enter和monitor exit，是为了把一个object的锁头�
 ### IO缓冲流
 好处是类似于批量处理，减少和IO的交互总次数（还有内核态用户态之间的切换）。
 
+### jvm heap memory vs direct memory
+the direct memory is the native os memory.  
+in old IO times, data need to transfer from jvm heap -> native memory -> IO.  
+However now in NIO, there's a byte buffer for channel, which data can be directly in native memory, not need to take it into jvm heap memory any more.
 
-
-
+### JVM runtime area
+heap: 
+method area: 与heap在不同的内存空间。所以method area的垃圾收集是怎么做的呢？  
+1. <1.8 perm space
+2. >= 1.8: meta space
+constant pool: 
 
 
 
