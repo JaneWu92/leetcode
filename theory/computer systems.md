@@ -243,10 +243,56 @@ method area: 与heap在不同的内存空间。所以method area的垃圾收集�
 2. >= 1.8: meta space
 constant pool: 
 
+### JVM stack area
+https://www.geeksforgeeks.org/java-virtual-machine-jvm-stack-area/  
+每个线程都会有一个stack area。  
+这个stack area应该是以方法为单位来组织的。好像应该是每个方法是一个stack frame
+包括：
+1. local variable array： method parameter + local variable, access by index. non-static method has extra "this" pointer
+2. operand stack: 
+3. frame data
+local variable和operand stack的大小是在compile time就已经定好的。frame data是放一些在"constant pool resolution, normal method return, and exception dispatch"
+
+### JVM constant pool?
+没有常量池不行吗。为什么要这么设计。
+
+### GC roots?
+里面的静态变量，和常量池变量，是分配在哪里的
+
+### thread local是在哪里分配
 
 
+### GC
+1. Serial young + Serial old(when JDK first released)
+2. Parallel scavenge + Plrallel old(to improve performance)(默认的)
+3. Parallel new + CMS(to resolve the STW problem)
+新生代普遍用的是copy，老年代普遍用的是compact，除非特殊说明的比如CMS。
+内存比例：新生代老年代1：2。老年代更多，可能是由于程序的本质决定。不可能所有的都是短暂的对象。
 
+**CMS**
+初始标记root:STW标记root。因为root很少，所以很快
+并发标记：GC线程和application线程一起run
+重新标记：STW。因为只剩一些上一步多增加的，所以也很快。
+并发清除：GC线程和application线程一起run。做清除。会产生浮动垃圾，等下一轮CMS一起清除
+缺点：内存碎片化（sweep导致），浮动垃圾  
+内存碎片化不仅会降低你分配内存的性能（因为你就不能连续分配，得去free链表上找）。还会可能使你找不大足够大的，因为都是些分开的小的。  
+这时候就是promotion failed, 即CMS不行，这时候要用serial old，出来做compact.（为什么不用paralel old?）
 
+### https要加密， 那么DSP那种socket编程呢
 
+### https
+传输数据，client用密码加密，传输给server，server用密码解密。这个是对称加密。
+问题：密码怎么传输？
+server给client他的pubkey，client用server的pubkey加密密码，传给server。非对称算法。
+问题：如果有中间人伪造服务器。发送自己的伪造公钥给client，client用它来加密自己的密钥。中间人就知道了密码。所以要解决，这个公钥是不是属于这个server的问题。
+CA(certificate asistant): 可信任的第三方中心。来申请certificate的人必须要提供很多信息（是不是你的公司，你的server）来审核。假冒着通不过审核。
+证书：用CA的私钥加密的（server的公钥+域名+服务器信息）
+CA的证书是怎么嵌到操作系统的。
+
+###
+GC log里面，GC是young GC, Full GC是老年代GC， 通过printGCDetail可以看出来
+GC -> DefNew
+Full GC -> TenuredGC
+关于里面的time，sys是内核态时间，user是用户态时间
 
 

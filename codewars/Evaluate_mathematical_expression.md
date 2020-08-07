@@ -22,12 +22,13 @@ def parse_expstring_to_items(expstring):
             if len(tmp_str) == 0 and (len(res) == 0 or res[-1] in {"+", "-", "*", "/", "(", "-("}):
                 is_negative = True
             elif len(tmp_str) > 0 or res[-1] == ")":
-                if is_negative == True:
-                    flip_string_number(tmp_str)
-                    is_negative = False
-                res.append(tmp_str)
-                tmp_str = ""
-                res.append(ele)
+                if len(tmp_str) > 0:
+                    if is_negative == True:
+                        tmp_str = flip_string_number(tmp_str)
+                        is_negative = False
+                    res.append(tmp_str)      
+                    tmp_str = ""
+                res.append("-")
         elif ele == "(":
             if is_negative == True:
                 ele = "-" + ele
@@ -182,11 +183,11 @@ if __name__ == "__main__":
     # r1 = 2.5
     # s1 = "-(3 + -(6+3.9)*90.4 - -(-3/6.8 + 2.893*7.235))"
     # r1 = -1208.76
-    s1 = "2 + -2"
-    r1 = 0
+    s1 = "(3)--3"
+    r1 = 12
     res = calc(s1)
     print(res)
-    assert res == r1
+    # assert res == r1
 
 
     # ["2 + -2", 0],
