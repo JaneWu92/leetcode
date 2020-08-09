@@ -1,3 +1,5 @@
+Solution1:  
+A totally bad solution!!
 ```python
 def part_of_float(character):
     return character.isdigit() or character == "."
@@ -192,4 +194,109 @@ if __name__ == "__main__":
 
     # ["2 + -2", 0],
     # ["10- 2- -5", 13],
+```
+
+Solution2:
+```python
+class MathExpressionEval:
+    def __init__(self, expression):
+        self.expression = expression
+        self.token_list = None
+        self.token_tree = None
+
+    def part_of_float(self, character):
+        return character.isdigit() or character == "."
+
+
+    def parse_tokens(self):
+        self.expression = self.expression.replace(" ", "")
+        res = []
+        tmp_str = ""
+        for ele in self.expression:
+            if self.part_of_float(ele):
+                tmp_str = tmp_str + ele
+            else:
+                if tmp_str != "":
+                    res.append(tmp_str)
+                    tmp_str = ""
+                # should be (+_*/ here, need to pick up negative
+                if ele == "-" and (not res or not self.part_of_float(res[-1]) and res[-1] != ")"):
+                    res.append("n")
+                else:
+                    res.append(ele)
+        if tmp_str != "":
+            res.append(tmp_str)
+        print(res)
+        return res
+
+
+    def number_map(self, eles):
+        number_map = []
+        for ele in eles:
+            try:
+                float(ele)
+                number_map.append(True)
+            except:
+                number_map.append(False)
+        return number_map
+
+
+    def grade(self, operator):
+        if operator in {"(", ")"}:
+            return 1
+        elif operator in {"+", "-"}:
+            return 2
+        elif operator in {"n"}:
+            return 3
+        elif operator in {"*", "/", "%"}:
+            return 4
+
+
+    def do_arithmetic(self, ope, right, left=None):
+        res = None
+        right = float(right)
+        if left == None and ope == "n":
+            res = -1 * right
+        else:
+            left = float(left)
+            if ope == "+":
+                res = left + right
+            elif ope == "-":
+                res = left - right
+            elif ope == "*":
+                res = left * right
+            elif ope == "/":
+                res = left / right
+            elif ope == "%":
+                res = left % right
+        return str(res)
+
+
+    def my_eval(self):
+        self.token_list = self.parse_tokens()
+
+
+def calc(expression):
+    print(expression)
+    e = MathExpressionEval(expression)
+    return e.my_eval()
+
+
+if __name__ == "__main__":
+    tests = [
+    # ["1 + 1", 2],
+    # ["8/16", 0.5],
+    # ["3 -(-1)", 4],
+    # ["2 + -2", 0],
+    ["10- 2- -5", 13],
+    ["(((10)))", 10],
+    ["3 * 5", 15],
+    ["-7 * -(6 / 3)", 14], 
+    ["-(1 + -(3+2)*4 - -(-5/10 + 9/6))",18], 
+]
+
+for test in tests: 
+    res = calc(test[0])
+    print(f"result is : {res}")
+    # assert  res == test[1]
 ```
