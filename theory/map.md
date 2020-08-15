@@ -1,7 +1,7 @@
-##总体
+## 总体
 因为所在项目的
-##JVM原理
-###JMM
+## JVM原理
+### JMM
 栈和堆，还有方法区  
 因为JVM其实是计算机的模拟。而计算机主要是CPU，寄存器，和主存构成。  
 对每个CPU来说，他都有自己的一组寄存器来存放当前这个线程的所有上下文。  
@@ -27,7 +27,7 @@ field is class field or instance field.
 and local variable is inside a method.  
 栈里放的是function call和primitive local variable 或者object local variable的reference。
 所以field是放在堆上的。
-###JMM and hardware memory architecture
+### JMM and hardware memory architecture
 **difference between stack and heap**
 stack: local variable and function calls  
 heap: objects  
@@ -37,7 +37,7 @@ heap: objects
 CPU是有自己的寄存器和CPU缓存，并且别人也访问不到。  
 但是要注意这中间有两部分。一部分是thread自己的local variable。另一部分是共享的。应该说，除了local variable，其他都是共享的。  
 所以共享就会涉及到数据竞争的问题。包括缓存也会涉及到缓存不一致的问题。
-###Java GC
+### Java GC
 算法分类，mark-sweep, mark-copy, mark-compact
 mark-copy显然更适合生存的object数量少的情况，mark-sweep更适合生存的object比较多的情况  
 所以一个是对应年轻代，一个是对应老年代。
@@ -77,10 +77,10 @@ Gabage first，垃圾多的块先回收。不管他是什么代。
 然后他可能还维护了一个块的垃圾信息。知道这个块里面有多少垃圾（或者说多少活着的）。然后能够决定回收最多垃圾的那块。
 1. 在这种不同的分代策略下，什么时候触发垃圾的回收。
 https://www.cnblogs.com/yufengzhang/p/10571081.html
-###Java class structure
-###Java how to load class
-###JVM arguments
-###java并发编程
+### Java class structure
+### Java how to load class
+### JVM arguments
+### java并发编程
 首先要提到为什么有并发这一说，因为多线程对共享资源的并发处理会引起我们期望外的错误结果。其实呢，他的核心是原子性。也就是说，我在access这个共享变量的时候，别人不能access。
 但其实，在单cpu的情况下，多线程并发执行也会有问题。即使说单cpu情况下，多线程也已经是物理上的串行了。所以这个原子性是指，整个事务的原子性。这个事务不管你是多简单，还是多复杂。只要你把他定义成一个事务，也就是你希望一次只能有一个线程在做这个事务，并且要一口气做完。那么你就需要某种机制，来保障这个效果。
 最朴素的思想就是，如果我有一把锁，要访问那个资源做一系列操作的时候，我就把这个锁锁上，也就是把这个资源的访问锁上，也即，在我做这个资源访问的时候，没有人能够打断我，也没有人能够碰这个资源。
@@ -109,17 +109,17 @@ lock.lock
 我感觉好像可以是跟synchronized一样操作的。只是说它多了一些功能。比如可以打断，不等了，还有可以重入（重入应该syn也是可以的）。还有可以实现公平锁和非公平锁。
 我觉得就是把syn的那个对象变成lock的这个对象，应该就可以了。但是lock有一个，是需要自己释放锁。这个是需要注意的。这个的次数跟unlock应该也是要对应的。
 **乐观**
-##IO框架
+## IO框架
 BIO, NIO, AIO
-##数据库Mysql
-##Spark分布式
-##网络基本概念
-##操作系统
+## 数据库Mysql
+## Spark分布式
+## 网络基本概念
+## 操作系统
 进程是操作系统资源分配的最小单位。  
 线程是操作系统任务调度的最小单位。
-###进程上下文切换
+### 进程上下文切换
 1. 虚拟地址的切换
 2. 当前的CPU寄存器，PC这些东西都要打包放进内存。以备待会儿恢复。
-###线程上下文切换
+### 线程上下文切换
 只需要上面的第二个步骤。
-##Linux
+## Linux
