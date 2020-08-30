@@ -278,6 +278,14 @@ local variable和operand stack的大小是在compile time就已经定好的。fr
 内存碎片化不仅会降低你分配内存的性能（因为你就不能连续分配，得去free链表上找）。还会可能使你找不大足够大的，因为都是些分开的小的。  
 这时候就是promotion failed, 即CMS不行，这时候要用serial old，出来做compact.（为什么不用paralel old?）
 
+**G1**
+逻辑分代，物理不分代
+分而治之。
+
+**FullGC**
+年轻代不够的时候，就会做minor GC，该到suvivor的到suvivor，该到老年代的到老年代。  
+如果老年代也不够，就会触发
+
 ### https要加密， 那么DSP那种socket编程呢
 
 ### https
