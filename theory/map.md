@@ -168,6 +168,12 @@ socket这个结构有三块核心区域读写缓存和等待队列。放到这�
 因为select不返回具体的ready的socket，所以java线程接下去就是去做一次遍历所有socket，对那些已经ready的进行处理。
 NIO代码：https://www.jianshu.com/p/183163eaac15
 
+===========
+NIO，只有一个线程来负责监听所有的IO事件。
+主线程可以阻塞地
+
+===========
+
 ## 数据库Mysql
 1. 返回每科成绩最好的前两名学生。
 ```
@@ -247,6 +253,78 @@ public static getInstance(){
 }
 }
 ```
+
+### Spring AOP
+把一些系统性的功能抽象起来，避免代码的重复，也能够做到解耦。  
+```aidl
+class LogAspects{
+    public void mybegin(JoinPoint joinpoint){
+        System.out.println(jointpoint.getSignature.getName(), jointpoint.getArgs());
+    }
+}
+
+<bean id = logAspects, class="mypackage.LogAspects">
+<aop:aspect ref = logAspects > 
+    <aop:pointcut expression="execution(* *.*(. .)) id = "log"" >
+    <aop:begin method = "mybegin" point-cut-ref="log"> //the method is the method implemented in Class logAspects
+    <aop:afterrunning >
+    <aop:afterexception>
+    <aop:after>
+    <aop:around>
+</aop:aspect>
+```
+Advice, joinpoint, pointcut  
+pointcut是你自己规定的某一些你觉得需要有同样的advice的方法
+joinpoint是在这个pointcut上的某一个
+Advice是在pointcut上都需要做的事情
+
+### Zero Copy
+https://developer.ibm.com/technologies/java/articles/j-zerocopy/  
+
+普通的一个IO操作（从磁盘读文件，然后发送到网络的另一端）中间是什么过程呢。  
+1. User mode -> Kernal mode: 
+    1. user ask kernal to do system call read(file)
+    2. data is copied from file to kernal buffer
+    3. data is copied from kernal buffer to user buffer
+2. Kernal mode -> User mode:
+    1. kernal read returns and control goes back to user. 
+3. User mode -> kernal mode:
+    1. user ask kernal to do socket.send()
+    2. data is copied from user buffer to kernal buffer. 
+    3. data is copied from kernal buffer to socket buffer
+4. Kernal mode -> User mode:
+    1. kernal socket.send returns and control goes back to user
+
+零拷贝  
+1. User mode -> Kernal mode: 
+    1. user ask kernal to do FileChannel.transferTo
+    2. data is copied from file to kernal buffer
+    3. data is copied from kernal buffer to socket buffer
+2. Kernal mode -> User mode:
+    1. Kernal tranferTo returns and control goes back to user
+```aidl
+https://www.cse.iitb.ac.in/~mythili/os/notes/notes-nw-sockets.txt#:~:text=*%20Socket%20buffers%3A%20Every%20socket%20has,buffer%20(in%20user%20space).
+* Socket buffers: Every socket has a pair of buffers (memory pages) to store sent and received data. The read system call reads from the socket receive buffer, and copies data from the socket receive buffer (in kernel space) to the user provided buffer (in user space). If there is no data in the socket buffer, read blocks (unless a non blocking option is enabled). 
+The write system call copies data from the user provided buffer to the socket transmit buffer, and initiates further processing and transmission of the packet. The write system call may block if there is no space in the socket buffer (unless non blocking option is set). Why would there be no space in the write buffer? For example, the transmission may not be happening fast enough due to TCP congestion control.
+
+```
+##  Direct Memory Access(DMA)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
