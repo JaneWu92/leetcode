@@ -293,8 +293,7 @@ https://developer.ibm.com/technologies/java/articles/j-zerocopy/
     2. data is copied from user buffer to kernal buffer. 
     3. data is copied from kernal buffer to socket buffer
 4. Kernal mode -> User mode:
-    1. kernal socket.send returns and control goes back to user
-
+    1. kernal socket.send returns and control goes back to user  
 零拷贝  
 1. User mode -> Kernal mode: 
     1. user ask kernal to do FileChannel.transferTo
@@ -308,18 +307,111 @@ https://www.cse.iitb.ac.in/~mythili/os/notes/notes-nw-sockets.txt#:~:text=*%20So
 The write system call copies data from the user provided buffer to the socket transmit buffer, and initiates further processing and transmission of the packet. The write system call may block if there is no space in the socket buffer (unless non blocking option is set). Why would there be no space in the write buffer? For example, the transmission may not be happening fast enough due to TCP congestion control.
 
 ```
+总结：
+1. 普通拷贝：
+    1. read:  2 copy + 2 context switch
+    2. write: 2 copy + 2 context switch 
+2. 零拷贝： 
+    1. read:  1 copy + 1 context switch 
+    2. write: 1 copy + 1 context switch
+3. 因为普通拷贝都需要经过user space, 也即application buffer， 所以都多了一步。而零拷贝，直接去掉这一步。直接从file-> kernal， 再kernal-> socket buffer。
+4. 要注意buffer之间的拷贝是**cpu copy**， 而hard drive-> kernal buffer && kernal buffer到protocal engine是**DMA copy**
+https://blog.csdn.net/u013256816/article/details/52589524  
+```aidl
+问题
+Data copy什么时候用到CPU？
+https://www.cnblogs.com/tuowang/p/9398876.html
+```
+
 ##  Direct Memory Access(DMA)
+Many hardware systems user DMA, like the ones we see in above: the disk drive and network card.
+Steps:
+1. CPU first initiates the transfer
+2. transfer is in progress and cpu goes out to do other operations
+3. CPU receive an interrupt from the DMA controller when the ope is done.
+
+
+## Java堆外内存
+https://stackoverflow.com/questions/30622818/off-heap-native-heap-direct-memory-and-native-memory
+https://www.baeldung.com/native-memory-tracking-in-jvm
+https://www.jianshu.com/p/17e72bb01bf1
 
 
 
+## DSP
+### 异地多活
 
 
+## Mysql
+1. 一些数据结构的知识点
+```
+Mysql默认的引擎是InnoDB引擎, InnoDB引擎下数据库的索引的结构是B+树
+B+树是B树的变种
+
+```
+2. B树查询
+    1. B树是M叉树搜索树，并且每个节点可以放M-1个值。（因为每个值都可以分叉出两个子树）
+    2. B树效果最好的时候，时间复杂度大概是logM N。也就是树的层数。
+    3. B树其实就是二叉搜索树的进阶。M叉搜索树。能把二叉搜索树的高度给变矮，搜索树的高度变矮，时间复杂度就是变好。
+    4. B树每个节点的元素树，和这个节点的叉树，是差1的关系。（一刀切成两半）
+    5. B树Node的结构 class Node： T[] keys; Node[] children; 
+    6. 注意以上的keys应该是放一个Entry，就是连value也放进来。不然作为索引，你只有key不带数据，就没有意义，这里的value应该是数据库中记录的地址。
+    7. 注意这里是通过他们之间的自然关系，来确定左右子树的关系，也就是keys[i]，它的左右分别是children[i], children[i+1]
+    8. 在B树中找节点，是磁盘操作。在节点中找关键字，是内存操作。另外注意，节点中的key数组是有序的，所以也可以用二分法。
+3. B+树和B树的关系
+    1. B+树的节点有多少元素，它的children就有多少分叉。
+        1. 比如[60, 85]，它的两个分叉是[10, 20, 60], [70, 77, 85]
+        2. 也就是说，子分叉必包含父的元素作为边界
+    2. B+树不像B树在每个key都一起存放着数据库记录的地址，而只是在叶子节点才放着。
+        1. 因为B+树第一点的特性，叶子节点必包含所有key。而它刚好把所有的数据库记录的地址也就放在叶子节点上。
+        2. 这样的好处是，除去叶子节点的最后一层，其他层都是不需要放数据库记录地址的，这样每个节点就能多放很多很多key，也就是整个tree会变低，需要查磁盘就少了。
+    3. B+树的叶子节点是按顺序维护着双向链表的，
+        1. 这样sql在wherecondition做range查询的时候的，比如>15，可以直接定位到。
+        2. 假如没有这个双向链表，得把先找到15，然后在树里找到所有大于15的节点。
+        3. 双向链表感觉时间复杂度应该是O(1)，而没有的话应该是logM N。
+4. 聚簇索引和非聚簇
+    1. 
+   
+5. Mysql怎么选择主键
+    1. 尽量小：int或者bigint
+        1. 在数据量很大的情况下，主键太大，每次加载进内存的数据就少。磁盘的IO就会增大。
+    2. 尽量自增：
+        1. 如果生成的id是无序的，那B+树需要做出很大的修改，cost太大。
+    
+    
+## 分布式
+### 分布式id
 
 
-
-
-
-
+### 分布式锁
+1. 类别
+    1. 乐观锁
+        1. 一般是加一个version的字段
+        2. select record, version as v1; update version, record set v2 ==(v1+1) when version = v1
+        3. 这个乐观锁其实是一个思想。就跟Jdk里的CAS一样
+    2. 悲观锁    
+        1. 在执行前就拿锁，阻塞所有其他人。
+        2. 悲观锁要注意锁的释放。
+        3. 而关于锁的释放会牵扯出其他很多问题。
+            1. 比如说，time expire，我还没处理完，锁自动被释放了，其他人也拿到了锁，结果可能还会造成二次释放。
+            2. 
+2. 用数据库实现
+    1. 基于表主键唯一
+        1. insert into table ("mylock")
+        2. true means you are the only one success, false means someone run faster than you, then you need to try later
+        3. the "true" one need to delete this record after it finish its action
+    2. 基于版本号字段（乐观锁）
+        1. SELECT lock, version FROM optimistic_lock WHERE id = 1;
+        2. UPDATE optimistic_lock SET lock = "sdf" where id = 1 and version = version - 1
+        3. 问题：怎么释放？答案：乐观锁是锁和你的业务操作在一起，原子性的，不涉及到“释放”。
+    3. 基于mysql内置的排他锁（悲观锁）
+        1. setAutocommit(false) 
+        2. select * from where id = 3 for update;
+        3. do your things here
+        4. commit();
+        5. 可以通过设置事务的超时时间来避免死锁。
+3. 用redis实现
+    1. 
 
 
 
