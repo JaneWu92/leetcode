@@ -337,11 +337,6 @@ https://www.baeldung.com/native-memory-tracking-in-jvm
 https://www.jianshu.com/p/17e72bb01bf1
 
 
-
-## DSP
-### 异地多活
-
-
 ## Mysql
 1. 一些数据结构的知识点
 ```
@@ -421,11 +416,63 @@ B+树是B树的变种
 
 
 
+### Java Runtime Data Area
+
+1. program counter register
+    1. thread private
+    2. content: the address of current executing JVM instruction. undefined if it's native method.
+2. stack
+    1. thread private
+    2. content: frames. one method will have one frame(local variable, partial result, return address)
+    3. exception stackoverflow
+3. heap(GC related)
+    1. thread shared
+    2. all objects
+    3. exception OOM
+4. method area
+    1. thread shared: stores per-class structs
+    2. content: the class object, constant pool
+    3. the specification doesn't mandate the location of the method area. not either if the GC need to happen or not
+        1. in java 1.7 it's in the heap
+        2. in java 1.8 it's in the native memory
+    4. exception OOM
+5. native method stack
+    1. thread private
+
+sort
+quick sort
+double stack sort
 
 
 
 
-
-
+## DSP
+### 单location内
+1. component:
+    1. messaing: primary-standby
+    2. cache: master-master
+    3. db: primary-standby
+2. fail-over:
+    1. messaging: server端的，primary挂了后，standby会自动顶上来。用户无感知，只是所有sub在上面的好像都会挂掉。但是用户的sub有自己的重连机制。时间短没问题。
+    2. cache: 多活，每个都是平等的request接收节点。如果失败会有failover
+    3. db： server端的，primary挂了后，standby自动顶上来。用户无感知。
+3. load-balance:
+    1. messaging: no
+    2. cache: yes. 
+        1. 节点选择， random的。无论是pub还是query。然后失败会被failover.
+    3. db: no.
+### 异地多活
+1. fail-over:
+    1. sub: no failover 
+        1. may because it's long connection.
+    2. pub: has failover
+        1. on the server side, if it finds the current location is down. it will redirect the requests to other location. 
+        2. @? how's this "redirect" works? if it's in server side！
+        不可能是在server端。因为server端就已经挂了。这个failover肯定是在client端做的。
+        如果一个有问题，它就会自动切到下一个。是random的。甚至没有判活。
+        3. 
+    3. query: has failover
+2. 一致性
+    1. 
 
 
