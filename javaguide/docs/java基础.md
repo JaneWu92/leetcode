@@ -33,3 +33,49 @@
     * 声明在类里面的，也能是non-static class。但是它就只能在outer class里被实例化，外面不行。然后outer class的member无论属性它都可以访问。
     * 例子： HashMap里的static class Node, 因为这个类不是public的，所以不能在外部实例化。只能在HashMap class内被实例化。
     
+* 类的限定符访问权限  
+
+|access modifier|same class|same package|sub class|anywhere|
+|----|----|----|----|----|
+|private|yes||||
+|default|yes|yes|||
+|protected|yes|yes|yes||
+|public|yes|yes|yes|yes|
+
+* transient
+1. use
+    * modifier to class member
+    * means to ignoe when do serialization
+2. why the field table(and other relative members) are transient in HashMap
+    * hash值是通过Object.hashcode()来计算的，是native方法，不同的虚拟机可能不一样，所以序列化后要重新计算
+    * 为此，hashmap把他们标记成transient，然后自己写的readObject, writeObject去重构造HashMap
+
+
+## cpu, 指令集， 操作系统的关系
+* 指令集和cpu架构的关系
+    * 指令集是cpu的设计图。就是接口和实现的关系。接口声明了功能，实现则是使这些功能落地。
+* 操作系统和指令集的关系
+    * LINUX操作系统支持多种指令集，WINDOWS操作系统只支持x86指令集。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
