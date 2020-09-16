@@ -81,7 +81,22 @@ static class Node<K, V> implements Map.Entry<K, V>{
 }
 }
 ```
-
+## 逻辑
+### putVal
+* 如果table是空，就reSize。这里的reSize就是相当于initTable，是封装成统一方法而已
+* 如果table不空，hash到的bucket是空，就new一个Node放进去
+* 如果table不空，hash到的bucket也不空
+    * 是TreeNode，就加进TreeNode里
+    * 否则就是链表
+        * key在就replace
+        * key不在就加链表尾，然后要看要不要树化，>=8
+* size++
+* size超过threashold，就去扩容reSize()
+### reSize
+* 去new一个size是之前两倍大的table。（如果本来table是null，就用initSize）
+* 然后去遍历把oldTab的数据搬到newTab
+    * 区分出高低链。放到新的链表当前的位置，和当前的位置加上old n的位置
+    * oldTab[i] = null
 ## points
 ### 为什么hashmap的capacity要是2的倍数
 * 取模才能够直接用位与运算
