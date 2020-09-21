@@ -58,11 +58,19 @@
     * LINUX操作系统支持多种指令集，WINDOWS操作系统只支持x86指令集。
 
 
-
-
-
-
-
+## 集合
+* HashSet: add, remove
+* HashMap: put, remove
+* convert of Array and List
+    * int[] to List
+        * List<Integer> list = Arrays.stream(nums).boxed().collect(Collectors.toList());
+    * Integer[] to List
+        * List<Integer> list = Arrays.stream(nums).collect(Collectors.toList());
+    * List to int[]
+        * int[] arr = list.stream().mapToInt(i->i).toArray();
+    * List to Integer[]
+        * Integer[] arr = list.stream().toArray();
+        
 
 
 
