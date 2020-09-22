@@ -115,13 +115,59 @@
 * 强引用
     * 默认就是强引用
     * 什么情况下都不会进行GC，内存崩了也不收
-* 软引用
-    * 内存不够就回收
-    * 什么叫内存不够，一旦触发GC应该就是内存不够了把
-     
+* 软引用: soft reference
+    * soft referece are guaranteed to be cleared before a JVM throws an OOM error
+    * 这个OOM的抛出应该是比如Full GC一次后，它会看这时候老年代空余的空间够不够刚刚触发FullGC的young promote的空间需要大小
+    * 如果大于，就okay，如果小于，就会OOM。
+    * 而这个soft reference应该就是，一开始FullGC没算上它，但是Full gc后发现计算出来的空间<我的需求，就再去把这些soft回收掉
+    * 这时候再看空间，如果够了，就万事大吉，不够，就throw OOM error
+    * 用途： cache，尽量多的数据在内存，但是又不想把内存撑爆
+    * MyBatis源码大面积地使用了软引用
+* 弱引用： weak reference
+    * 只要GC，就回收
+    * WeakHashMap
+        * key是weakreference的，也就是说只要一gc，这个entry就会被
+* 虚引用： phantom reference
+    * 
+#### 引用和回收
+* softref是gc后内存还够就不回收，weakref是一有gc就会被回收。
+* 这个体现在代码上，或者算法上是什么呢。
+* 引用，和堆上内存的那个对象实例。我们在说回收的时候，是在说这两者中的哪一个呢。
+* 我理解的应该是，这些什么引用说的都是reference。
+* 而堆上的那个对象实例的内存，只有在没有任何引用指向它的时候，它才会被回收。
+* 而不是说，我有3个引用同时指向堆内存中的一个对象实例，有任何一个引用设置为null了，GC就会把它指向的堆内存的对象实例回收了。
+```aidl
+WeakReference<Integer> weakI = new WeakReference<>(new Integer(3));
+System.gc();
+System.out.println(weakI.get()); // will be null
+
+// or 
+
+Integer i = new Integer(3);
+WeakReference<Integer> weakI = new WeakReference<>(i);
+i = null;
+System.gc();
+System.out.println(weakI.get()); // will be null
+```
+
+### OOM
+* https://www.sohu.com/a/343414554_463994    
+* GC几次后会出现OOM？
+    * 应该是full gc一次后，发现腾出的空间还不够你要放过来(young promote过来)的东西，就会throw OOM: java heap space
     
     
-    
+## GC
+### Concurrent Mode failure
+https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/cms.html#concurrent_mode_failure
+因为CMS的最后一步，concurrent mark and sweep是跟用户线程一起在跑的，所以如果说application allocate的太快了，
+CMS的这最后一步还在做呢，用户线程发现已经allocate失败，就会有concurret mode failure
+这时候用户线程就会停下来，直到CMS这最后一步完成，也就是STW了。
+* Promotion Failure
+就是young的活的要promote到tenured generation发现没空间了，就会报这个，这个就会引发老年代的垃圾回收。
+
+### G1 allocation failure
+就是发现没有空的region让我做copy了
+
     
     
     
