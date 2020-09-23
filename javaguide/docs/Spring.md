@@ -64,3 +64,37 @@ connection和threadlocal的关系。
 spring里的singleton多线程共享的问题
 有状态数据，无状态数据，怎么做。
 ```
+
+## 反射和代理
+### 反射
+* 反射是java提供的一个API.
+* 能够动态地拿到一个类的所有信息：方法，成员变量，修饰符之类的
+* 有什么用？
+```aidl
+import java.lang.reflect.*;
+public class TestMain {
+    public static void main(String[] args) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+        Class test = Test.class;
+        Field[] fields = test.getFields();
+        Method[] methods = test.getMethods();
+        Constructor[] constructor = test.getConstructors();
+        Test testO = (Test)test.newInstance();
+        Method m = test.getMethod("public_method", Integer.class, String.class);
+        m.invoke(testO,5,"sdf");
+        System.out.println(test);
+    }
+}
+class Test{
+    private String private_field;
+    public String public_field;
+    public Test(){
+    }
+    private String private_method(Integer i){
+        return String.valueOf(i);
+    }
+    public String public_method(Integer i, String ii){
+        System.out.println("in the public method");
+        return String.valueOf(i);
+    }
+}
+```
