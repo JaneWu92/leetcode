@@ -324,7 +324,27 @@ public final class myOwnClass extends Proxy implements UserService {
 
 ```
 
+### 循环依赖
+#### 普通java
+* 以下代码会stackoverflow，因为会一直死循环调用对方的constructor
+```aidl
+public class UserService {
+    IndexService indexService;
+    public UserService(){
+        indexService = new IndexService();
+    }
 
+    public static void main(String[] args) {
+        UserService s = new UserService();
+    }
+}
+class IndexService{
+    UserService userService;
+    public IndexService(){
+        userService = new UserService();
+    }
+}
+```
 
 
 
