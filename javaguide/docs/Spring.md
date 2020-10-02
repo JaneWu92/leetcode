@@ -345,6 +345,109 @@ class IndexService{
     }
 }
 ```
+* userful blog
+    * https://blog.csdn.net/java_lyvee/article/details/101793774
+
+
+### Spring singleton bean创建过程
+* AbstractBeanFactory.getBean(java.lang.String)
+    * AbstractBeanFactory.doGetBean
+        * DefaultSingletonBeanRegistry.getSingleton(String) //这个返回的是null，因为这时候还没打上increation的标签。
+        * DefaultSingletonBeanRegistry.getSingleton(String, ObjectFactory<?>) //走到这个方法的时候才会打inCreation的标签
+* DefaultSingletonBeanRegistry.getSingleton(java.lang.String, ObjectFactory<?>)
+    * //这里的objectfacotry是在调用者AbstractBeanFactory传进来的createBean(beanName, mbd, args);
+    * beforeSingletonCreation //打 increate 标签
+    * singletonObject = singletonFactory.getObject(); //用刚才传进来的工厂去生产对象
+    * afterSingletonCreation // 去掉 increate 标签（因为此时bean已经创建好了，不用这个increate了）
+    * addSingleton
+        * singletonObject = singletonFactory.getObject(); //用反射创建出object
+        * this.singletonObjects.put(beanName, singletonObject); //放进单例池，一级缓存
+        * this.singletonFactories.remove(beanName); //从二级缓存中拿掉
+        * this.earlySingletonObjects.remove(beanName); //从三级缓存中拿掉
+
+#### Spring三级缓存
+* https://www.cnblogs.com/grey-wolf/p/13034371.html
+
+singletonObjects
+earlySingletonObjects
+singletonFactories
+说是为了解决循环依赖。
+这个一级缓存很好理解，就是你的singleton objects总要有一个地方放。
+earlySingle二级缓存也好理解，大概就是，我新建的那个object，如果没有属性注入还，我就先把他放这里
+也就是说，这个半成品。
+因为我去注入属性的时候，我的属性那个object可能也要引用我，那他就可以来这个early来拿。
+也就是说，完整的object，（也就是说，要注入属性的时候，发现在singletonobject里是有的），会被放入singletonObject里。
+不完整的呢，就是你要去注入属性的时候，发现在singleobject里没有，没关系，就去earlysingle拿，然后你也可以被放进singletonobjects里。
+总的来说就是，我要一个东西，我就去singletonobject里拿，没有的话，我就去new，new完就先放early里，然后去属性注入，注入完，就从early拿掉，放到singleobjets里。
+然后属性注入的话，就是去singleobject里拿===> 循环啊。哪里是个头啊
+
+
+singletonsCurrentlyInCreation
+    在DefaultSingletonBeanRegistry.getSingleton(String, ObjectFactory<?>)中，
+    一开始add, 最后remove。也就是说在上面这个步骤的时候已经完成了bean的创建
+
+
+
+
+
+
+
+### 杂乱
+org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory<?>)
+//就是一级缓存拿不到indexservice，就想去创建。。。
+beforeSingletonCreation(beanName); 
+singletonObject = singletonFactory.getObject();
+//想通过factory去创建indexservice
+//我的天，这里怎么是indexService但是跑下一步得到的确是UserService
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])
+//这里beanName还是indexService
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+//这里已经wrap住了一个indexService
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateBean
+
+beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
+//这里的stragegy是：CglibSubclassingInstantiationStragety
+org.springframework.beans.factory.support.SimpleInstantiationStrategy#instantiate(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.String, org.springframework.beans.factory.BeanFactory)
+constructorToUse = clazz.getDeclaredConstructor(); 
+//拿到constructor
+BeanUtils.instantiateClass(constructorToUse);
+org.springframework.beans.BeanUtils#instantiateClass(java.lang.reflect.Constructor<T>, java.lang.Object...)
+return ctor.newInstance(argsWithDefaultValues);
+
+返回到
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateBean
+beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
+//已经拿到一个属性还没set的indexService
+initBeanWrapper(bw);
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBeanInstance
+//返回一个属性还没set的indexService
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+//返回一个属性还没set的indexService
+applyMergedBeanDefinitionPostProcessors  //@？
+//postprocessor，不知道到底这里再做什么
+earlySingletonExposure = isSingletonCurrentlyInCreation(beanName)
+先把indexService暴露出来
+addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+				this.singletonFactories.put(beanName, singletonFactory);
+				this.earlySingletonObjects.remove(beanName);
+				this.registeredSingletons.add(beanName);
+//从early缓存中拿出来，放到factory缓存中
+//放进去的factory是() -> getEarlyBeanReference(beanName, mbd, bean)这个objectfacotry
+//应该就是一个有postprocessor的objectfacotry，也就是说产生出来的bean，是比如能带aop的
+populateBean(beanName, mbd, instanceWrapper);
+//这里做了些啥，又是做一通post processor
+
+返回到
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+返回到
+beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
+//这里怎么变成userservice了
 
 
 
@@ -357,11 +460,97 @@ class IndexService{
 
 
 
+=====什么时候注入依赖=========
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean
+PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
+org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor#postProcessPropertiesorg.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor#postProcessProperties
+metadata.inject(bean, beanName, pvs);
+org.springframework.beans.factory.annotation.InjectionMetadata#inject
+element.inject(target, beanName, pvs);
+org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject
+value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
+org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveDependency
+result = doResolveDependency(descriptor, requestingBeanName, autowiredBeanNames, typeConverter);
+org.springframework.beans.factory.support.DefaultListableBeanFactory#doResolveDependency
+instanceCandidate = descriptor.resolveCandidate(autowiredBeanName, type, this);
+org.springframework.beans.factory.config.DependencyDescriptor#resolveCandidate
+beanFactory.getBean(beanName);
+//这里就回到了，用beanfactory去拿userService
+
+然后我们把断点再打到它去populateBean(beanName, mbd, instanceWrapper);的时候
+它还是会回到上面的beanFactory.getBean(beanName);
+beanFactory.getBean(beanName);
+org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean
+//现在是去拿index的属性user的属性的index，然后走道
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton(java.lang.String, boolean)
+isSingletonCurrentlyInCreation就是true了。
+						singletonObject = singletonFactory.getObject();
+						this.earlySingletonObjects.put(beanName, singletonObject);
+						this.singletonFactories.remove(beanName);
+//就会通过factory去创建object，并且放进early里。然后把factory缓存删掉
+//靠！有事没事啊！！！！你知道你自己在绕什么圈吗。。。
+这个时候的facotry，是那时候放进去的() -> getEarlyBeanReference(beanName, mbd, bean)
+这里面这个factory它的参数bean，已经是刚刚我们一开始不知道什么时候创建的没有属性的object了
+然后facotyr这里呢，就是用那些个不知道什么postprocessor把它渲染一遍
+可能因为我们这里没加其他的注解，这个渲染完就是好像还是和以前一样。没啥变化。
+到这里，就拿到了indexservice，也就是userservice bean应该就okay了。
 
 
 
 
 
+
+### aop
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+//原生对象
+exposedObject = initializeBean(beanName, exposedObject, mbd);
+//代理对象
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+//到这里有了cglib代理对象
+
+
+//BeanPostProcessor是什么加入的
+org.springframework.context.support.AbstractApplicationContext#registerBeanPostProcessors
+org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)
+org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List<org.springframework.beans.factory.config.BeanPostProcessor>)
+org.springframework.beans.factory.config.ConfigurableBeanFactory#addBeanPostProcessor
+org.springframework.beans.factory.support.AbstractBeanFactory#addBeanPostProcessor
+
+
+
+
+### spring bean创建过程
+因为我们说的是singleton，所以再applicationcontext一new的时候，所有的singleton的对象都会被创建出来，放在一个concurrenthashmap里面，叫做singletonObjects里
+这个就是所谓的一级缓存。
+然后这个bean的创建过程，要跟object的创建过程区分开来。
+spring不仅仅是创建一个对象，他还能对这个对象做很多的扩展，比如最常见的我们的aop。就是spring在创建对象后对对象做了扩展的例子。
+
+
+
+### spring接口增强
+* aware接口
+BeanNameAware, BeanFactoryAware, ApplicationContextAware
+这个从名字上来看，应该是回调。spring的框架在准备你这个bean的时候，在某个过程中，会调用你的这些方法，去传给你一点东西。
+这个就是所谓的回调。
+
+* BeanPostProcessor
+这个是spring提供的一个接口。也算是回调把。
+实现了这个接口的所有类，只要是在spring容器中的。就都会被spring收集起来
+然后呢，这些被收集起来的bean post processor，在每个bean的准备过程中，都会被调用，来对bean进行增强。比如aop就是用这个beanpostprocessor做的。
+
+* InitializingBean and DisposalbeBean
+前者是在bean属性已经注入后调用，后者是在bean被销毁的时候被调用
+
+* init-method 和 destroy-method
+@PostConstruct 和 @PreDestroy
+注意，postconstruct是先于InitializingBean的，从InitializingBean的方法afterPropertiesSet就可以看出来。
+前者是构造函数调用后，后者是属性注入前。
 
 
 
