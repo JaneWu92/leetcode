@@ -568,6 +568,7 @@ org.springframework.beans.factory.support.AbstractBeanFactory#addBeanPostProcess
 
 
 1. instantiate
+org.springframework.beans.factory.support.AbstractBeanFactory.getBean(java.lang.String)
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
 instanceWrapper = createBeanInstance(beanName, mbd, args);
 //原生对象
@@ -631,7 +632,27 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#app
 
 10. Bean Ready to use
 
+### spring三级缓存解决循环依赖
+org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
+    Object sharedInstance = getSingleton(beanName);
+        Object singletonObject = this.singletonObjects.get(beanName); if null
+        singletonObject = this.earlySingletonObjects.get(beanName); if null
+        ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); singletonObject = singletonFactory.getObject(); also can be null
+    if sharedInstance == null,
+         org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+         就走我们之前整理的bean的生命周期的开始
+    if shareInstance != null
+         直接返回
 
+然后循环依赖的问题是，A的准备需要B，B的准备又需要A，这样永远没人能够走出去
+所以这里用了一个缓存。他的前提是A的准备的两个步骤可以分开，一个是无参构造器的构造，一个是属性的注入。
+所以通过无参构造器构造好A之后，就先把它放缓存里，然后去注入它的属性B。然后发现哪里都找不到B，所以，要从无到有，
+就走到B的Bean生命周期。
+也是一样的步骤，先去B的无参构造构造好，然后放缓存，再去注入属性A，因为之前A已经放缓存里了，这里就可以直接拿到了。
+然后B就完成了自己的使命，return到之前A要注入属性B的那一段，然后A也就属性注入完成了。
+
+这里有一个问题，就是
+      
 ### difference between @Bean and @Component
 * @Bean可以导入第三方包的类，@Component不能（不然你就得去人家的源代码上加@Componet）
 * @Bean可以加选择逻辑
