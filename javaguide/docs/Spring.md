@@ -519,8 +519,15 @@ BeanNameAware, BeanFactoryAware, ApplicationContextAware
 * InitializingBean and DisposalbeBean
 前者是在bean属性已经注入后调用，后者是在bean被销毁的时候被调用
 
+* @PostConstruct 和 @PreDestroy
+JSR-250
+
 * init-method 和 destroy-method
-@PostConstruct 和 @PreDestroy
+Spring-specific interfaces
+
+* 顺序
+
+
 注意，postconstruct是先于InitializingBean的，从InitializingBean的方法afterPropertiesSet就可以看出来。
 前者是构造函数调用后，后者是属性注入前。
 
@@ -550,7 +557,77 @@ org.springframework.beans.factory.support.AbstractBeanFactory#addBeanPostProcess
 
 
 
+### spring bean life cycle
+1. instantiate
+2. populate properties
+3. BeanNameAware callback
+4. BeanFactoryAware callback
+5. ApplicationContextAware callback
+6. pre initialization: BeanPostProcessor
+7. afterPropertiesSet of InitializingBean
+8. custom init method
+9. post initialization: BeanPostProcessors
+10. Bean Ready to use
 
 
+1. instantiate
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+//原生对象
 
+这里有点问题，因为代理对象的时候肯定也用到了beanpostprocessor
+2. populate properties
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyPropertyValues
+
+3. BeanNameAware callback
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeAwareMethods
+
+4. BeanFactoryAware callback
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeAwareMethods
+
+5. ApplicationContextAware callback
+
+6. pre initialization: BeanPostProcessor
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsBeforeInitialization
+
+7. afterPropertiesSet of InitializingBean
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeInitMethods
+
+8. custom init method
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeInitMethods
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeCustomInitMethodorg.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeCustomInitMethod
+
+9. post initialization: BeanPostProcessors
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsAfterInitialization
+//在这里，才真正有了代理对象（如果你配置了AOP的话）。
+
+10. Bean Ready to use
+
+
+### difference between @Bean and @Component
+* @Bean可以导入第三方包的类，@Component不能（不然你就得去人家的源代码上加@Componet）
+* @Bean可以加选择逻辑
+```aidl
+@Bean
+@Scope("prototype")
+public SomeService someService() {
+    switch (state) {
+    case 1:
+        return new Impl1();
+    case 2:
+        return new Impl2();
+    case 3:
+        return new Impl3();
+    default:
+        return new Impl();
+    }
+}
+```
 
