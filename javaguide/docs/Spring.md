@@ -575,7 +575,6 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doC
 instanceWrapper = createBeanInstance(beanName, mbd, args);
 //原生对象
 
-这里有点问题，因为代理对象的时候肯定也用到了beanpostprocessor
 2. populate properties
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyPropertyValues
