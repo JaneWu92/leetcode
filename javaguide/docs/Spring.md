@@ -636,7 +636,7 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#app
 org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
     Object sharedInstance = getSingleton(beanName);
         Object singletonObject = this.singletonObjects.get(beanName); if null
-        singletonObject = this.earlySingletonObjects.get(beanName); if null
+        singletonObject = this.earlySinAbstractBeanFactorygletonObjects.get(beanName); if null
         ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); singletonObject = singletonFactory.getObject(); also can be null
     if sharedInstance == null,
          org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
@@ -651,7 +651,19 @@ org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
 也是一样的步骤，先去B的无参构造构造好，然后放缓存，再去注入属性A，因为之前A已经放缓存里了，这里就可以直接拿到了。
 然后B就完成了自己的使命，return到之前A要注入属性B的那一段，然后A也就属性注入完成了。
 
-这里有一个问题，就是
+这里有一个问题，就是缓存的设计。
+1. 只有singletonObjects： 
+    这里有一个很直接明显的问题，本成品bean可能就直接被用户拿去使用了。
+2. singletonObjects + earlyBeanObjects
+    半成品放earlyBeanObjects里。成品再放singletonObjects里。这个半成品是，只用了无参构造器构造的实例，其他的步骤都还没做。也就是只做了bean的构造的第一步
+    这样子在B的周期里，就能够成功注入A（半成品）。
+    问题来了，这时候A的属性注入（bean构造第二步）做完了，它接下去要做其他步骤。在倒数第几步做beanpostprocessor（AOP）的时候，产生了一个新的代理类。
+    但是B这个时候不知道，它的field还是之前的原生A。这个就是要解决的问题。
+3. 为了解决这个问题，引入了一个Factory缓存。
+
+### singletonFactories
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.addSingletonFactory
+//////////////////////////////
       
 ### difference between @Bean and @Component
 * @Bean可以导入第三方包的类，@Component不能（不然你就得去人家的源代码上加@Componet）
