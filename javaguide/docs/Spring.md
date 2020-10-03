@@ -349,7 +349,7 @@ class IndexService{
     * https://blog.csdn.net/java_lyvee/article/details/101793774
 
 
-### Spring singleton bean创建过程
+mttttytttit786y6yjh  =0## Spring singleton bean创建过程
 * AbstractBeanFactory.getBean(java.lang.String)
     * AbstractBeanFactory.doGetBean
         * DefaultSingletonBeanRegistry.getSingleton(String) //这个返回的是null，因为这时候还没打上increation的标签。
@@ -497,34 +497,6 @@ isSingletonCurrentlyInCreation就是true了。
 
 
 
-
-
-
-### aop
-
-org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
-
-instanceWrapper = createBeanInstance(beanName, mbd, args);
-//原生对象
-exposedObject = initializeBean(beanName, exposedObject, mbd);
-//代理对象
-
-org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
-wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
-wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
-//到这里有了cglib代理对象
-
-
-//BeanPostProcessor是什么加入的
-org.springframework.context.support.AbstractApplicationContext#registerBeanPostProcessors
-org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)
-org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List<org.springframework.beans.factory.config.BeanPostProcessor>)
-org.springframework.beans.factory.config.ConfigurableBeanFactory#addBeanPostProcessor
-org.springframework.beans.factory.support.AbstractBeanFactory#addBeanPostProcessor
-
-
-
-
 ### spring bean创建过程
 因为我们说的是singleton，所以再applicationcontext一new的时候，所有的singleton的对象都会被创建出来，放在一个concurrenthashmap里面，叫做singletonObjects里
 这个就是所谓的一级缓存。
@@ -551,6 +523,30 @@ BeanNameAware, BeanFactoryAware, ApplicationContextAware
 @PostConstruct 和 @PreDestroy
 注意，postconstruct是先于InitializingBean的，从InitializingBean的方法afterPropertiesSet就可以看出来。
 前者是构造函数调用后，后者是属性注入前。
+
+
+
+### aop
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+
+instanceWrapper = createBeanInstance(beanName, mbd, args);
+//原生对象
+exposedObject = initializeBean(beanName, exposedObject, mbd);
+//代理对象
+
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
+wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+//到这里有了cglib代理对象
+
+
+//BeanPostProcessor是什么加入的
+org.springframework.context.support.AbstractApplicationContext#registerBeanPostProcessors
+org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)
+org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List<org.springframework.beans.factory.config.BeanPostProcessor>)
+org.springframework.beans.factory.config.ConfigurableBeanFactory#addBeanPostProcessor
+org.springframework.beans.factory.support.AbstractBeanFactory#addBeanPostProcessor
 
 
 
