@@ -525,15 +525,12 @@ JSR-250
 * init-method 和 destroy-method
 Spring-specific interfaces
 
-* 顺序
-
-
 注意，postconstruct是先于InitializingBean的，从InitializingBean的方法afterPropertiesSet就可以看出来。
 前者是构造函数调用后，后者是属性注入前。
 
 
 
-### aop
+### Spring AOP
 
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
 
@@ -577,7 +574,31 @@ instanceWrapper = createBeanInstance(beanName, mbd, args);
 
 2. populate properties
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean
-org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyPropertyValues
+    if (bp instanceof InstantiationAwareBeanPostProcessor) {
+	    InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+		PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
+//到这里应该是autowired的属性都已经被set了
+// ibp = AutoWiredAnnotationBeanPostProcessor。
+所以这个意思是@autowire注解也是用beanpostprocessor做的
+但是他的postProcessAfterInitialization是return bean，也就是说什么都没做
+这里用的是他的postProcessProperties方法，
+org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.postProcessProperties
+    InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
+    metadata.inject(bean, beanName, pvs);
+org.springframework.beans.factory.annotation.InjectionMetadata.inject
+org.springframework.beans.factory.annotation.InjectionMetadata.InjectedElement.inject
+org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement.inject
+    value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
+org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency
+org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency
+    Map<String, Object> matchingBeans = findAutowireCandidates(beanName, type, descriptor);
+        addCandidateEntry(result, candidate, descriptor, requiredType);
+            Object beanInstance = descriptor.resolveCandidate(candidateName, requiredType, this);
+org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate
+    return beanFactory.getBean(beanName);
+org.springframework.beans.factory.support.AbstractBeanFactory.getBean(java.lang.String)
+//这里就是通过beanfactory再去拿bean的过程。
+这里AbstractBeanFactory是DefaultListableBeanFactory类型
 
 3. BeanNameAware callback
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
@@ -606,6 +627,7 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#inv
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsAfterInitialization
 //在这里，才真正有了代理对象（如果你配置了AOP的话）。
+//在spring的初始化阶段，会有很多的BeanPostProcessor,但不是全部都有用来增强。大部分的postProcessAfterInitialization这个方法都是直接返回原bean
 
 10. Bean Ready to use
 
