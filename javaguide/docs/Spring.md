@@ -635,22 +635,26 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#app
 ### spring三级缓存解决循环依赖
 org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
     Object sharedInstance = getSingleton(beanName);
+    DefaultSingletonBeanRegistry.getSingleton(true)
         singletonObject = this.singletonObjects.get(beanName); if null
         singletonObject = this.earlySinAbstractBeanFactorygletonObjects.get(beanName); if null
         ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); singletonObject = singletonFactory.getObject(); also can be null
     if sharedInstance == null,
          org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
-         就走我们之前整理的bean的生命周期的开始
+         如果是第一次初始化的话，就走这里，就是我们之前整理的bean的生命周期的开始
     if shareInstance != null
          直接返回
 
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
     instanceWrapper = createBeanInstance(beanName, mbd, args); //无参构造器构造原生对象
-    addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
-    populateBean(beanName, mbd, instanceWrapper);
-    exposedObject = initializeBean(beanName, exposedObject, mbd);
+    addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean)); //加进factory缓存
+    populateBean(beanName, mbd, instanceWrapper); //属性注入
+    exposedObject = initializeBean(beanName, exposedObject, mbd); //一些初始化，包括代理对象
     earlySingletonReference = getSingleton(beanName, false);
     //已经就是代理过的对象了
+    //不从第三级缓存（factory）中拿，只从第一二缓存中拿
+    如果发现从第二缓存中拿的和我本来的bean不相等，证明可能被代理了或者啥的，就报错
+    如果一样，就没问题，就返回。
     
     
 然后循环依赖的问题是，A的准备需要B，B的准备又需要A，这样永远没人能够走出去
@@ -691,7 +695,15 @@ org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingle
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean
     addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
      
-    
+### earlySingletonObjects
+* 什么时候被放进去的
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, boolean)
+在这个方法里面earlySingletonObjects拿不到，并且， allowEarlyReference是true
+    singletonObject = singletonFactory.getObject();
+    earlySingletonObjects.put(beanName, singletonObject);
+    this.singletonFactories.remove(beanName);
+//就从factory中新建出来，然后放到early里，并且从factory中移掉。
+/////////////////////////////////////////////////////////////////////
     
 ### difference between @Bean and @Component
 * @Bean可以导入第三方包的类，@Component不能（不然你就得去人家的源代码上加@Componet）
