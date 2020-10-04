@@ -635,7 +635,7 @@ org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#app
 ### spring三级缓存解决循环依赖
 org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
     Object sharedInstance = getSingleton(beanName);
-        Object singletonObject = this.singletonObjects.get(beanName); if null
+        singletonObject = this.singletonObjects.get(beanName); if null
         singletonObject = this.earlySinAbstractBeanFactorygletonObjects.get(beanName); if null
         ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName); singletonObject = singletonFactory.getObject(); also can be null
     if sharedInstance == null,
@@ -644,6 +644,15 @@ org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
     if shareInstance != null
          直接返回
 
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+    instanceWrapper = createBeanInstance(beanName, mbd, args); //无参构造器构造原生对象
+    addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+    populateBean(beanName, mbd, instanceWrapper);
+    exposedObject = initializeBean(beanName, exposedObject, mbd);
+    earlySingletonReference = getSingleton(beanName, false);
+    //已经就是代理过的对象了
+    
+    
 然后循环依赖的问题是，A的准备需要B，B的准备又需要A，这样永远没人能够走出去
 所以这里用了一个缓存。他的前提是A的准备的两个步骤可以分开，一个是无参构造器的构造，一个是属性的注入。
 所以通过无参构造器构造好A之后，就先把它放缓存里，然后去注入它的属性B。然后发现哪里都找不到B，所以，要从无到有，
@@ -660,11 +669,30 @@ org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean
     问题来了，这时候A的属性注入（bean构造第二步）做完了，它接下去要做其他步骤。在倒数第几步做beanpostprocessor（AOP）的时候，产生了一个新的代理类。
     但是B这个时候不知道，它的field还是之前的原生A。这个就是要解决的问题。
 3. 为了解决这个问题，引入了一个Factory缓存。
-
+    参看底下（### singletonFactories）
+    也就是这个factory缓存，是能生产出半成品的代理类的。
+    但这里有一个问题，其他它可以在要放进factory缓存的时候，就把它生产出来放early缓存里就可以了。为什么还要延迟生产。
+    ///////////////////////////
+    
 ### singletonFactories
-org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.addSingletonFactory
-//////////////////////////////
-      
+* 什么时候使用的
+org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(java.lang.String, boolean)    
+    singletonFactory = this.singletonFactories.get(beanName);
+	singletonObject = singletonFactory.getObject();
+	//这个singletonFactory是下面的“什么时候放进去的”的时候放进去的
+	    org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.getEarlyBeanReference
+        org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator.getEarlyBeanReference
+        Object proxy = this.createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+        //这里就生成了代理对象
+	earlySingletonObjects.put(beanName, singletonObject);
+	singletonFactories.remove(beanName);
+    
+* 什么时候放进去的     
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean
+    addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+     
+    
+    
 ### difference between @Bean and @Component
 * @Bean可以导入第三方包的类，@Component不能（不然你就得去人家的源代码上加@Componet）
 * @Bean可以加选择逻辑
