@@ -471,7 +471,7 @@ InitializingBean接口，afterPropertiesSet，init-method属性调用
 8. custom init method
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeInitMethods
-org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeCustomInitMethodorg.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeCustomInitMethod
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeCustomInitMethod
 
 9. post initialization: BeanPostProcessors
 org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)
@@ -599,4 +599,51 @@ public SomeService someService() {
     }
 }
 ```
+
+### Spring bean 创建过程
+主要过程是在 abstract autowire capable beanfactory里面
+instantiate，实例化，用无参构造函数new一个对象。无参构造器只是其中一个例子，应该是推断构造函数，然后去new对象。
+populate bean，属性注入。
+initialize，初始化。
+    invokeAwareMethods。
+        调用bean有实现的一些aware接口，beanNameAware，beanFactoryAware
+    applyBeanPostProcessorsBeforeInitialization: @PostConstruct
+    invokeInitMethods: 
+        InitializingBean的afterPropertiesSe，是直接调用这个方法 -> boolean isInitializingBean = (bean instanceof InitializingBean);
+        用反射调用init-method的方法
+    applyBeanPostProcessorsAfterInitialization： 像AOP什么的，如果没有循环依赖，不需要earlyexpose，这里就会做aop
+
+
+### 循环依赖解决方法
+主要的思路是，把半成品先放在缓存中暴露出来，这样循环依赖的一环可以被打破，也就是说一个bean在没有准备好的时候，已经可以被引用。
+前提是无参构造器的构造和属性的注入，可以被拆分成两步。
+一个类先去无参构造出一个对象，然后把bean defination和factory放进factory缓存里
+然后去populatebean，就是属性注入，这时要拿的另一个对象，就去走刚才的过程，
+先无参构造，然后又要去属性注入第一个对象。这时候它就去缓存里拿A，也就只能从facory缓存里拿，
+并且构造出来，放early里。然后就接下去做自己的生命周期。做完后放singletonobject里，返回给A的populatebean
+然后A继续往下走，去做自己的其他生命周期，aware接口，applybeanpostprocessbeforeintitialize来做@postconstruct，
+然后invokeinit，接口调用afterproperties, 再反射init-method。然后apply bean post proess after initialize
+这里就是做aop。但注意，这里如果前面有循环引用的话，这里就不作aop了，而是之前会从early里拿，early已经是aop过后的了。
+这里只有不是循环引用的，才会做aop代理。
+关于几级缓存，其实两级缓存肯定是需要的，三级就不一定了。可以直接用early缓存，把要放factory的时候，直接把他create出来然后放early就好了。
+也就是说，bean要么在singletonobjects里，要么在earlyobjects里
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
