@@ -633,6 +633,53 @@ initialize，初始化。
 
 
 
+###
+FactoryBean
+ProxyFactoryBean
+BeanNameAutoProxyCreator
+29-Spring监听器（1）
+
+设计模式
+
+
+
+
+
+### Spring Listener
+
+我们加的所有listener，在spring applicationcontext初始化的时候，都会被下面那句加进去。
+org.springframework.context.support.AbstractApplicationContext.addApplicationListener
+这个addApplicationListener是ConfigurableApplicationContext的方法。
+这个就相当于listener的注册。
+这个listener是注册到ApplicationEventMulticaster(SimpleApplicationEventMulticaster)里
+并且也加入到context的applicationListeners(LinkedHashSet)
+这个listener既然加入了，也就是注册到context里了。那么肯定有一个地方，这个listener的onmessage方法是会被调用的
+this.getApplicationEventMulticaster().multicastEvent((ApplicationEvent)applicationEvent, eventType);
+果然是在context publishevent的时候，调用自己的multicaster去cast event
+这个castevent应该就是，调用listener的onmessage
+相当于consumer在publisher那里注册（把自己consumer的引用给它）了，然后publisher在publish的时候，就是去调用注册在它那里的consumer的onconsum函数
+这个模式的好处到底是什么。
+是listener和publisher都不用改。而第三方会把他们组装起来，造成他们之间的关系。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
