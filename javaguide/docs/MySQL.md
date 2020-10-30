@@ -36,7 +36,17 @@
     * serializable
         * 话不多说，锁表。
     
+### 数据库sql注入
+* 主要就是对引号加反译符。
+* 因为用户就是通过加引号结束上条sql
+```
+#sql注入(用户输入非法的值)使用Statement对象，无法防止sql注入(TRUNCATE操作很危险)
+SELECT * FROM admin WHERE username = '韦小宝' AND PASSWORD = ''; TRUNCATE TABLE tableName;#'
+#sql注入(用户输入非法的值)使用PreparedStatement对象，可以有效防止sql注入
+SELECT * FROM admin WHERE username = '韦小宝' AND PASSWORD = '\'; truncate table tableName;#'
     
+```
+
     
     
     
