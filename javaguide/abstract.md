@@ -158,11 +158,16 @@ public class Test {
 * 什么时候需要读锁?
 ??????????????????????????????
 * get有加锁吗,需要吗？
-    * 
-
-
-
-
+    * Node的value和nextNode都是volatile修饰，所以线程间是可见的
+    * 这个数组也是加volatile的
+    * 也就说，如果数组的地址变了，是线程间可见的
+    * 数组中某个元素的value或者next变了，线程间也是可见的。
+    * 但是这里还有一个问题，如果我在get的时候直接tab[idx]
+        * 这个如果另外一个线程已经tab[idx] = null
+        * 我这个线程应该是看不到。
+        * 所以这可能是CHM用tabAt(getVolatile)的原因
+        * 就会去主存拿，而不是拿自己缓存里面的可能已经老了的数据
+        
 
 ### LongAdder
 * AtomicLong不好吗？
@@ -175,14 +180,96 @@ public class Test {
     * 局部的就是random地选择一个Cell，去cas加一
     * 整体的就是Cell[]还是null，或者Cell[idx]是null，或者要扩容。就得去cas cellBusy
     * 也就是用自旋锁去锁住整个Cell[]
-      
+ 
+        
+### Synchronized和lock的区别
+
+### AQS是什么东西
      
-
-
-
-
-
-
+     
+### 线程
+* 线程和进程的区别
+    * 线程是调度的最基本单位
+    * 进程是资源分配的最基本单位 
+* 线程的几种状态
+    * new
+        * 新建状态。调用start前，只是个对象
+    * runable
+        * 就绪。等待cpu调度
+    * running
+        * 正在运行
+    * blocked
+        * 阻塞。在wait queue里，等待某种条件的满足（比如IO什么的）
+    * wait
+        * 等待唤醒信号
+    * timed_wait
+        * 有时间限制的wait
+    * terminated
+        * 运行结束的线程
+* blocked和wait状态有什么不一样
+    * 
+        
+* 创建线程有哪些方法
+    * 继承Thread重写run方法
+    * 实现Runable接口，然后放进Thread的构造参数里
+        * Thread的构造就是有一个Runable target。然后run方法就是调用target.run();    
+    * 
+        
+### java内存模型
+* 有哪几块
+    * 线程公有的
+        * heap
+        * method area
+    * 线程私有的
+        * stack
+        * program counter
+        * native stack    
+* method area里面有什么
+    * method area是存放per-class的东西
+    * 比如class
+    * 比如static variable refer to 的object。因为也是class级别的。
+* object和variable的差别
+    * 应该是object是对象
+    * 然后variable放的是object的地址把
+    * yes！说对了。
+                  
+### 垃圾回收机制
+#### 总的思路
+* 通过GC root的扫描，能够扫描到所有目前来说还在被引用（也就是活着）的对象。
+* 然后把其它对象给处理掉（也就是让这些dead对象的memory，能够重新用来放置新对象）。       
+* 常用算法
+    * mark and sweep
+        * 会有碎片产生
+    * mark and copy
+        * 没有碎片，但是空间利用率会低。因为你得划分成两个地方，才能做“copy”操作。也就是要有一个缓冲区，是不能被用的，要被流出来进行下次的copy
+    * mark and compact
+        * 没有碎片，空间利用率也高。但是可能算法就比较复杂把
+* 基于新老年代的特点
+    * 新生代是死的多，也就是剩下的多，可以用mark and copy
+    * 老年代是活的多，所以一般用mark and sweep。但因为会有碎片，所以可能也用mark and compact
+    * mark-copy和mark-compact差不多，只是一个牺牲空间一个牺牲时间
+* GC Root是哪一些
+    * active thread
+* 搭配的发展：
+    * sequence mark-copy, sequence mark-compact
+    * parallel mark-copy, parallel mark-compact
+    * parallel mark-copy, concurrent mark and sweep
+    * G1    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 
