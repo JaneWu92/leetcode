@@ -249,7 +249,10 @@ public class Test {
     * 老年代是活的多，所以一般用mark and sweep。但因为会有碎片，所以可能也用mark and compact
     * mark-copy和mark-compact差不多，只是一个牺牲空间一个牺牲时间
 * GC Root是哪一些
-    * active thread
+    * the objects referred to by variables in stack
+    * the objects referred to by variables in native stack
+    * static variables in method area
+    * 还有一个是method area里的常量。不大理解
 * 搭配的发展：
     * sequence mark-copy, sequence mark-compact
     * parallel mark-copy, parallel mark-compact
