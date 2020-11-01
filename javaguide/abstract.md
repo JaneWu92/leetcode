@@ -181,7 +181,9 @@ public class Test {
     * 整体的就是Cell[]还是null，或者Cell[idx]是null，或者要扩容。就得去cas cellBusy
     * 也就是用自旋锁去锁住整个Cell[]
  
-        
+### 锁升级过程
+感觉这个锁的机制还不是太懂。monitor exit，monitor enter到底是什么
+      
 ### Synchronized和lock的区别
 
 ### AQS是什么东西
@@ -207,13 +209,87 @@ public class Test {
     * terminated
         * 运行结束的线程
 * blocked和wait状态有什么不一样
-    * 
+    * 说的是wait是调object.wait后会进入的，就是在等其他线程给信息
+    * block是在争抢锁资源的时候
+    * wait之后，肯定是要进入block的状态的。但其实没有太明白
+   ?????????????????
         
 * 创建线程有哪些方法
     * 继承Thread重写run方法
     * 实现Runable接口，然后放进Thread的构造参数里
         * Thread的构造就是有一个Runable target。然后run方法就是调用target.run();    
-    * 
+    * 把FutureTask放进Thread的构造参数里。（因为FutureTask is Runable）
+        * 构造FutureTask就得传入一个Callable
+        * 最后可以通过FutureTask的get来取得线程运行的结果返回值。
+        * FutureTask是怎么来扩展Thread(Runable)的这个框架的
+            * FutureTask实现了Runable接口
+            * 然后在它ovride的run方法里，调用了FutureTask的field Callable的call方法
+            * 然后它把结果set到FutureTask的field outcome里。
+            * 这样在调用FutureTask的get方法的时候，就能拿到这个outcome
+    * 用线程池来创建。
+        * ThreadPoolExecutor x = new ThreadPoolExecutor(corePoolSize,maximumPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
+```
+//use callable and futuretask to create thread
+public class Test {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        FutureTask<String> f = new FutureTask(new MyCallable());
+        Thread t1 = new Thread(f);
+        t1.start();
+        String s = f.get();
+        System.out.println("in main: " + s);
+    }
+}
+class MyCallable implements Callable<String> {
+    @Override
+    public java.lang.String call() throws Exception {
+        System.out.println("asdfsd");
+        Thread.sleep(2000);
+        return "success";
+    }
+}
+```    
+
+#### 线程池
+* 一些重要的类
+    * interface Executor
+        * 就有一个execute方法
+    * interface ExecutorService extends Executor
+        * Executor的功能增强
+        * submit, shutdown
+        * 实现类
+            * ThreadPoolExecutor
+    * Executors
+        * 新建Executors的工厂
+        * 主要应该是能产生四种类别的ExecutorService
+        * 但阿里巴巴推建不要用这个工厂来建，还是直接自己new ThreadPoolExecutor配置自己的参数比较好。
+    * ThreadPoolExecutor 
+* 规范的新建线程池方式：
+    * ThreadPoolExecutor
+        * int corePoolSize
+        * int maximumPoolSize
+        * long keepAliveTime
+        * TimeUnit unit
+        * BlockingQueue<Runnable> workQueue
+        * ThreadFactory threadFactory
+        * RejectedExecutionHandler handler
+    * 在还没达到core数，你来几个task我就新建几个thread。因为core的思想就是常驻线程。即使你有idle的可以用，我也不管，我就要建
+    * task来了，但是目前的pool里thread已经到达core数了，那我就放到workQueue里。在走廊里排队，等常驻线程里面有人做完，腾出线程来。
+    * 如果thread已经到corePoolSize，workQueue也排满了，就新开线程，上限是maxPoolSize
+    * 因为常驻数是corePoolSize，所以当workQueue排满去新建线程的时候，等一些任务做完，肯定会出现idle的。
+    * 那时候我们就希望能够把超过corePoolSize的部分都回收起来。
+    * 这里回收标准就是keepAlivetime,数量>core，idle时间超过keepAlivetime，就把这部分回收。
+    * 如果maxPoolSize和workQueue都满了，那就调用rejecthandler来处理接下来进来的task
+        * AbortPolicy
+        * DiscardPolicy
+        * DiscardOldestPolicy
+        * CallerRunsPolicy
+        * 自定义
+    * 主要就是几种：
+        * 一种是拒绝，并且给用户exception让他知道这个被reject了
+        * 一种是悄无声息，也丢弃了，但是用户不知道
+        * 还有也是丢弃，也不告诉用户，但是不是丢弃现在进来的，而是丢弃queue里最老的
+        * 不开线程了，我当前这个线程直接去run
+        * 自定义。重写rejectedExecution
         
 ### java内存模型
 * 有哪几块
