@@ -180,14 +180,61 @@ public class Test {
     * 局部的就是random地选择一个Cell，去cas加一
     * 整体的就是Cell[]还是null，或者Cell[idx]是null，或者要扩容。就得去cas cellBusy
     * 也就是用自旋锁去锁住整个Cell[]
- 
+
+### java的同步机制
+* java是通过monitor来实现线程间的同步问题
+* monitor是任何object都能充当。主要有两个方面
+    * mutual exclusion
+        * object locks
+    * cooperation
+        * object wait/notify method
+* monitor的构造
+    * lock room, entry set, wait set
+* 基本机制
+    * lock room只能有一个线程占用
+    * 如果有线程要申请锁，就会来到entry set等着lock room里的人出来
+    * lock room里面的线程一旦出来，就是release the monitor，所有在entry set里的线程就竞争进入，只有一个会成功
+    * lock room里的线程，如果call了wait，就会进入wait set。
+    * 可能很多线程都在wait set里面
+    * 只有等另外进入lock room里的某个线程，调用了notify/notify all，被notify的waitset里的线程，才会被移到entry set，有机会重新竞争lock room
+    * 注意notify是选择wait set里的一个线程进入entry set
+    * 而notify all是选择wait set里的所有线程进入entry set
+    * 所以照理来说，一个线程如果是wait的状态，下一个状态应该是要blocked的状态
+* wait只能在synchronized块内被调用。
+    * 因为wait是release monitor去等待其他线程的notify
+    * 你要release不得先已经own了。
+* monitor在JVM中的结构和实现
+```
+ObjectMonitor() {
+    _count        = 0; //用来记录该对象被线程获取锁的次数
+    _waiters      = 0;
+    _recursions   = 0; //锁的重入次数
+    _owner        = NULL; //指向持有ObjectMonitor对象的线程 
+    _WaitSet      = NULL; //处于wait状态的线程，会被加入到_WaitSet
+    _WaitSetLock  = 0 ;
+    _EntryList    = NULL ; //处于等待锁block状态的线程，会被加入到该列表
+  }
+```
+
+
+### 同步的一些概念
+* wait和sleep的差别
+    * wait释放锁，sleep不释放
+    * sleep永远是作用在current Thread.它是一个static方法。
+        * Thread.sleep
+    
+* park和wait,和sleep的区别
+
 ### 锁升级过程
-感觉这个锁的机制还不是太懂。monitor exit，monitor enter到底是什么
+* https://blog.csdn.net/tongdanping/article/details/79647337
+
       
 ### Synchronized和lock的区别
 
 ### AQS是什么东西
-     
+state, Node队列， 
+park， unpark
+cas(state)     
      
 ### 线程
 * 线程和进程的区别
@@ -212,7 +259,7 @@ public class Test {
     * 说的是wait是调object.wait后会进入的，就是在等其他线程给信息
     * block是在争抢锁资源的时候
     * wait之后，肯定是要进入block的状态的。但其实没有太明白
-   ?????????????????
+    * 参考上面“### java的同步机制”
         
 * 创建线程有哪些方法
     * 继承Thread重写run方法
@@ -333,8 +380,92 @@ class MyCallable implements Callable<String> {
     * sequence mark-copy, sequence mark-compact
     * parallel mark-copy, parallel mark-compact
     * parallel mark-copy, concurrent mark and sweep
-    * G1    
-    
+    * G1  
+* GC的思路
+    * 总体思路就是把dead的对下给你
+    * 由GC root出发，标记所有的alive object。
+    * 所有的alive object被标记后，就意味剩下的东西都是可以被清除掉的
+    * 然后你要清除哪一块内存（年轻代，老年代，G1）就可以扫描你的哪一块，然后把daed的清理掉。
+    * ???(“清理掉”的具体做法是什么？)从数据结构上来说，怎么样的一块内存才是被”清理“掉的
+        * 可能有很多种实现方式。freelist是一种。就是把所有free的memory记在表里面
+* GC什么时候被触发
+    * 这取决于你的GC算法的特点
+    * 比如是parallel mark and compact，因为是STW，又是compact，不需要额外空间和时间，就可以等内存满了再触发
+    * 比如CMS，是需要GC和用户线程一起run，所以必然要留一点空间给用户线程做新对象的分配。所以比如要到70%占用就触发之类的
+* mark and sweep算法伪代码
+```
+// mark
+for each root in roots
+    Mark(root)
+
+Mark(root)
+    If markedBit(root) == false then
+        markedBit(root) = true
+        For each v referenced by root
+            Mark(v)
+
+// sweep
+Sweep()
+//注意这里的each object in heap应该是applicaiton自己维护的放置所有对象的
+For each object p in heap
+    If markedBit(p) == true then
+        markedBit(p) = false
+    else
+        heap.release(p)
+```
+* CMS
+    * concurrent mark and sweep
+    * 步骤:
+        * 主要是mark和sweep。然后是针对老年代的。
+        * 因为涉及到concurrent，所以要么是mark是c，要么是sweep是c
+        * 或者应该说，这里应该先讨论的问题是，当GC和用户线程concurrent work的时候，会出现什么问题
+            * 最多就是有浮动垃圾啊。没感觉有太大的问题。只感觉会收的不充分，但是不会出错啊
+            * 因为就是会漏标嘛。
+            * 哦但是漏标的话，在你做标记的时候，假设内存地址A没标记到，然后当你在做sweep的时候，你就把它当dead清理了。
+            * 这样的话就会很危险。
+    * 步骤
+        * initial mark
+            * STW
+            * 顺着GC root标记，一旦标记到老年代就停止
+            * 就是要把所有老年代的树头标出来
+        * concurrent mark
+            * GC和application线程并发
+            * 根据第一阶段标记出来的所有alive的老年代的头节点，继续递归标记所有alive的对象
+            * 对于并发执行下产生的一些新的对象或者新的对象关系，要标记起来。
+                * 新生代promote到老年代的对象
+                * 直接在老年代分配的对象
+                * 老年代的引用关系发生变更
+            * 以上这些在这一阶段发生变化的对象所在的card都会被标记为dirty。
+        * concurrent preclean
+            * GC和application线程并发
+            * 重新标记上一阶段的的dirty card
+        * remark
+            * STW
+            * 这部分是重新扫描root。
+            * ？？？？？？？？？？
+            * 不明白如果这步骤重新扫描了，你前面几步干嘛去了。就完全没必要了
+        * concurrent sweep
+            * 遍历Ordinary Object Pointer table
+            * 这个表里是记录所有的对象
+            * 找出dead的，然后它的内存重新加入freelist。
+            * 也就说下次这块内存就可以重新使用了
+        * concurrent reset   
+            * 对所有的markedBit做reset。
+            * 相当于重置状态，因为下轮CMS是要用。
+* Promote mode failure vs Concurrent Mode Failure
+    * Promote mode failure
+        * 在进行minor GC的时候
+        * survivor已经没空间存放所有copy过来的活着的对象
+        * 就触发了promote，把survivor里本身年纪比较大的，移到老年代
+        * 但是这时候，发现老年代也没有空间给他了。
+        * 这时候会有一个promote mode failure
+    * concurrentmode failure
+        * 直接分配到老年代的对象发现没有足够大的地方了
+        * 从新生代promote过来的对象发现没有地方了。
+            * 所以某种程度上来说，promote mode failure会触发concurrent mode failure
+        * 这时候就得来一个serial old(mark and compact)做STW的清理
+
+* G1   
     
     
     
