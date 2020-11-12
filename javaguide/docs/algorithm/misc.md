@@ -31,7 +31,8 @@ push(e)	addFirst(e)
 pop()	removeFirst()
 peek()	peekFirst()
 ```
-
+* Stack用什么实现比较好
+    * Deque<TreeNode> stk = new LinkedList();
 * Queue的remove/poll, add/offer, element/peek区别
     * 旧的remove, add, element在数组为空的时候都会抛异常
     * 新的poll, offer, peek在数组为空的时候是会返回null
