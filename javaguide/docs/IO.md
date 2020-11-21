@@ -39,9 +39,40 @@ epoll用的不是遍历，是事件驱动，所以事件复杂度是O(1)
 
 
 
+### zero copy
+比如说要读一个文件，写到网络上
+普通的是，
+文件 -> kernel read buffer -> application space
+application space -> socket buffer -> NIC(网卡)
+所以这里面有很多拷贝，
+第一个kernel read buffer -> application space，
+第二个application space -> socket buffer
+要注意，对象是OS，它要帮我们做以上两个拷贝
+而zero copy，对于同样的情况
+要读一个文件，写到网络上
+文件 -> kernel read buffer -> NIC
+完全不需要拷贝。
+应用：kafka。因为kafka就是不断地做以上的操作（读文件写到网络上）
 
-
-
+### zero copy的两种技术
+mmap和sendfile
+sendfile：
+DMA从file到kernel buffer
+DMA从kernel buffer到NIC
+mmap：
+用户态和内核态共享数据缓冲区
+DMA从file到kernel buffer
+用户态直接引用文件句柄（kernel的），把kernel buffer的数据直接DMA传到NIC
+java中的实现
+```
+// 将当前 FileChannel 的字节传输到给定的可写 channel 中
+public abstract long transferTo(long position, long count,  WritableByteChannel target) throws IOException;
+// 将一个可读 channel 的字节传输到当前 FileChannel中
+public abstract long transferFrom(ReadableByteChannel src, long position, long count) throws IOException;
+// 对 Channel 做 mmap 映射
+public abstract MappedByteBuffer map(MapMode mode, long position, long size) throws IOException;
+```
+注意，DMA是一种技术，在device和kernel buffer中间的传输，不需要cpu介入
 
 
 

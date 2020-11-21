@@ -76,25 +76,67 @@ ISR：insync replica set
 当这个队列里的follower都同步完之后，leader才会给client发sync。
 然后leader发生故障，就从ISR里选leader
 
+ack参数配置
+publisher层面
+0：不等待ack。消息一到broker，就return。publsher收到return就结束这一条
+1：只等leader的ack
+注意这里。broker接收到，和ack间，还有一段时间。
+第一种的话，如果broker在期间挂掉。其实消息还没persist或者说正常全部处理。publisher就会return。也就丢了数据
+等leader ack，至少能保证，leader是数据完备的
+-1：leader和follower（ISR里的）全部落盘成功才返回。
+
+
+ack = -1 重复案例
+follower已经同步数据成功，但总体ack还没发，这时候leader挂了
+然后重新选举leader，那新的leader是不知道挂了的那个leader上一个ack还没发的
+所以它也不会去修复。然后client端因为没收到ack就会再发一条，就重复了
+
+丢数据问题
+ISR里只有leader，leader ack后挂了，数据也还没同步到其他副本里面。
+这种情况下就丢数据的。但是比较极端。因为ISR里面正常不会只有leader。也就是其他副本broker时延也太长了
 
 
 
+副本数据的一致性
+high watermark。
+就是副本种的最小的log end offset
+high watermark之前的数据才对消费者可见
+然后选新leader的时候，发一个消息，让大家都截取到high watermark
+
+At Least Once : ack = -1     全部副本都要同步
+At Most Once  ： ack = 0     什么ack，我不管。leader和follower都不等
 
 
 
+offset记录
+group+topic+partition
+
+ 
+kafka为什么consumer是zoopkeeper，priducer是brokerlist
 
 
+kafka高效读取
+1. 分区（集群）
+2. 磁盘顺序读写（单台）
+3. zero copy
 
 
+kafka事务
+
+kafka支持幂等性
+ProducerID + topic + sequenceID来标识唯一的一条数据
+所以如果发重了，broker端是知道的，就不会再写入
+以上其实是针对于server端挂了的场景。
+但是，如果你producer挂了，那producerid就是新的了。这个幂等性就没用了
+就是只通过这个幂等性来保持exactly once就没用了
+但是有一个疑问是，这个sequenceid，kafka server怎么样快速查到，你这个在我这里面有没有
 
 
-
-
-
-
-
-
-
-
+* consumer
+是while(true)主动去拉取的，需要设一个拉取的时间间隔
+offset有一些概念
+一个是latest，一个是earliest，一个是你上次记录在案的一个offset
+可以设置offset.reset，然后定义是latest还是earliest
+但是这个reset生效，只在你没有valid的offset的时候（一开始没有offset，或者你的offset是已经被删掉了的）
 
 
