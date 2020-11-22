@@ -154,3 +154,97 @@ offset有一些概念
         * kafka里提供的是，自定义存储offset。但是具体的机制我现在不太了解。
         
    
+* ISR
+就是in sync replica set。
+在kafka的同步机制中，不是全部follower都要同步
+而是valid的follower要同步。
+因为你想，如果我10个副本，有一个非常之慢，然后我每次发消息给leader完，要等你这个非常慢的也同步完，才ack，那不是很费性能吗
+所以它维护了一个in sync replica set，就是只有符合我的要求的（比如速度比较快的，才是我的ack必须集合）
+然后这个ISR是会动态维护更新的。慢的踢出去，快的加上来
+
+
+* 拦截器，序列化器，分区器
+* 为什么需要，又为什么要这个顺序
+* 拦截器就是统一做一点事情，序列化器就是因为要落盘，分区器可以自定义分区
+* 拦截器放前面，因为相当于剪枝
+* 序列化在分区前，可能是因为，分区需要依靠你序列化后的信息。
+
+
+* 生产者的整体结构，使用了几个线程
+两个线程，main和sender线程。
+就是生产者消费者模型，中间的那个容器是RecorderAccumulator
+main线程经历三个：拦截器，序列化器，分区器，就放入RA
+然后有一个另外的sender线程，从RA中拿数据，去send
+
+* 消息漏消费和重复消费
+在于你consumer那边commit的时刻跟处理的真实情况的时刻。
+consumer如果接收到100条，要等全处理完才commit
+然后处理完50条后挂了，再起来，还是要处理100条，就重复消费了
+漏消费比如说按时间去commit，commit的太早了，我刚收到100条，还没处理，你commit了，然后我挂了
+我再起来后，就丢失了这些数据
+
+
+* kafka topic的分区数可不可以增减，为什么
+可以增加，然后动态去调整消费者和生产者
+不可减少。因为你减少后，数被你删掉的数据怎么处理
+
+* kafka有内部topic吗
+有，比如consumer_offset
+
+
+* 分区分配
+range和roundrobin
+range就是正常的对每个topic来说
+roundrobin是为了尽量让所有的consumer能分到平均的partition数
+所以是把所有的topic和partition排序，然后分配给所有消费者
+这样每个consumer的partition差别数最多只是1
+
+
+* kafka日志目录结构
+.log,.index
+log存的应该是offset+数据
+index存的应该是offset+数据在log file中的偏移量
+感觉这样的话才make sense。但是这样的话，全部都是常数时间啊
+哪有网上说的什么二分查找
+==============澄清一下
+.index。人家是index，不是一一map。
+```
+00001.index
+
+offset: 28 position: 4362
+offset: 80 position: 12990
+offset: 160 position: 25809
+
+00001.log
+message: sf1  offset:28
+message: sf2  offset:50
+message: sf34  offset:80
+message: sf24  offset:90
+message: sf4  offset:160
+```
+只有有序并且一一map的，才是常数时间。
+如果只是有序，就是用二分查找。
+
+
+* kafka controller
+就是broker集群里面临时选出的一个老大，跟zookeeper打交道的。
+更新元数据什么的
+
+* kafka的选举
+    * controller和leader
+    * controller
+        * 抢zookeeper里的一个资源。就跟分布式锁差不多
+    * leader
+        * 从ISR中选一个出来
+
+
+* kafka的高性能
+    * 分布式
+    * 顺序写磁盘
+    * 零拷贝
+
+* kafka消息积压怎么办
+    * 加分区加消费者数（消费者不变，你多加分区也不变）
+    * 或者是，提高每批次拉取的数量。max.poll.records。默认是500
+
+
