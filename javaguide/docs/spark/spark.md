@@ -55,6 +55,57 @@
 * Action operator
     * sc.runJob
 
+* 宽窄依赖
+    * 父的一个partition如果需要被拆分成多个，跑到不同的子partition中，就是宽依赖
+    * 反之，如果父一个partition中的数据没被拆分，还是原封不动跑到另一个partition，就是窄依赖
+    * 所以注意，union是窄依赖
+
+
+* DAG
+    * directed acyclic graph(有向无环图)
+    * 根据宽窄依赖把DAG划分成不同的stage
+    * 规则就是，如果有宽依赖，就要形成不同的stage
+    * 因为宽依赖的性质是，它的行为需要parent的全员partition的参与
+    * 所以，它一定得“等待”parent全部计算完了，它才可以开始计算
+    * 这个“等待”就是stage划分的要义
+    * 而窄依赖就是，partition间互不影响，所以你只要这个partition好了，我就可以接下去计算，不管你其他的状态
+    * 所以这个stage可以说是，可以一起计算的全部东西，不需要等待谁
+    
+* 任务集
+    * 一次submit就是一个Application
+    * 一个action operator就会有一个active job
+    * 每到一个shuffle dependency就会划分一个新的stage
+    * 每个stage根据result rdd的partition数量，每个partition是一个task
+    * 注意是根据result rdd的partition数量，而不是parent rdd
+    * 比如reducebykey，如果parent是5个分区，结果是3个分区，就是3个task
+    * 因为是从结果出发嘛，去拉取我要的数据来做计算。
+
+* stage数量
+    * 1 + shuffle数
+    * 因为最后会有一个 resultStage
+
+* cache/persist和checkpoint
+    * 两个都是rdd的方法
+    * checkpoint是存在hdfs，persist是可以内存也可以磁盘
+    * checkpoint在job跑完之后，不会被删，而persisit会
+    * checkpoint是reliable的，persist不是
+    * checkpoint会切断lineage，persist不会
+    * ============
+    * 为什么需要
+        * 空间换时间呗。提高性能啊，不用每次都算
+        
+
+* 分区
+    * hash分区和range分区
+    * hash是默认的
+    * ============
+    * 要使用range分区，必须要求数据是有序的
+
+* RDD, Accumulator, Broadcast
+    * 一个只读，一个只写。都是共享的
+    * broadcast可以减少数据传输
+    * accumulator可以做到executor间共享
+    
 
 
 
