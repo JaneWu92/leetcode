@@ -216,6 +216,72 @@ ObjectMonitor() {
   }
 ```
 
+### 单例模式
+* 写一个单例模式
+```
+class MyClass{
+    //属性设置成private，因为不想让别人访问
+    //设置成static，因为单例，整个JVM只需要有一个
+    //要加volatile。避免cpu指令重排，还没实例化成功先赋值了instance的地址。
+    //这样其他线程可能就先拿了一个半成品instance
+    private static volatile MyClass instance;
+    //默认构造函数设置成private
+    //使别人没办法直接new
+    private MyClass(){
+    }
+    //设置成static，因为整个函数跟具体的实例没有关系
+    public static MyClass getInstance(){
+        //先不上锁，判断一下instance是不是可以使用
+        //因为使读，不上锁即可以提高性能，又可以当可用就直接用
+        if(instance == null){
+            //同步锁来保证只有一个线程在做事
+            //要锁住class而不是实例，因为我在一个静态方法里面
+            synchronized(MyClass.class){
+                //里面还要再判一次空，因为在你第一次判空和拿到锁之前，还有好长一段时间
+                //可能已经有另外一个线程进来把你的instance已经给初始化了
+                //所以同步块外的判断，在同步块里面，永远要重新判断一次
+                if(instance == null){
+                    instance = new MyClass();
+                }
+            }
+        }
+        return instance;
+    }
+
+}
+```
+* 为什么需要单例模式
+    * 我觉得应该有两个方面
+        * 一个是整个JVM只能有一个
+            * 比如一些资源类的
+        * 一个是只有一个就够了
+            * 比如spring里你配的serviec类，其实就是单例。
+            * 为什么单例，因为没有状态，你用一个类就够用了
+    * 单例只有一个，必然涉及到共享的问题。多线程下会不会有问题
+        * 如果没有状态，就有问题
+        * 如果有状态。那你相关的方法一定要是线程安全的
+        
+* 什么时候用static method
+    * 可以用排除法
+        * 如果你觉得一个方法，跟一个instance没什么关系。
+        * 也就是说，即使你没有任何实例，我这个方法都是有意义的。
+        * 那这时候就要考虑用static method
+
+### synchronized和指令重排
+* synchonized不能禁止指令重排
+* 所以单例模式里instance要加volatile修饰
+* synchronized不能防止指令重排，那它使怎么做到保证有序性的
+    * 指令重排，是cpu硬件层面的性能优化。
+    * 但是要注意，所有的优化，无论怎么重排序，都不能影响单线程程序的执行结果。
+    * 这就是as if serial的语义。
+    * synchronized是排他锁。所以在synchronized内部，肯定是单线程执行的
+    * 所以在单线程下，cpu的重排序，只要是不影响在此单线程内的结果，就都是可以优化的。
+    * 所以，它并没有禁止指令重排。
+    * 举个例子，单例模式中，之所以会出现拿到半成品的结果
+    * 就是因为其他的线程的“读”操作，没在synchronized里面。
+    * 也就是说，我正经的流程，都在synchronied保护内，是单线程没错。
+    * 但是会有很多线程偷偷在外面读这个共享变量（instance）的值
+    * 所以我在“as if serial”的指导下的优化，对我自己来说是合理的。但是影响到了你。
 
 ### 同步的一些概念
 * wait和sleep的差别
