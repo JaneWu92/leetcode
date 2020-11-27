@@ -248,3 +248,9 @@ message: sf4  offset:160
     * 或者是，提高每批次拉取的数量。max.poll.records。默认是500
 
 
+* Kafka 如何优化内存缓冲机制造成的频繁 GC 问题？
+https://www.imooc.com/article/293301
+https://www.cnblogs.com/jpfss/p/11790465.html
+
+
+
