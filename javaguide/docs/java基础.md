@@ -66,7 +66,9 @@
 
 
 
-
+### JMX
+* java management extension一个用来可以在动态对JVM发布指令的东西
+* 
 
 
 
