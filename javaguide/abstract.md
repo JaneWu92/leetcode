@@ -12,6 +12,7 @@
         int hash;
         K key;
         V value;
+        Node<K, V> next;
     }
     putVal(hash, key, value){
         idx = hash;
@@ -59,7 +60,8 @@
 ### ConcurrentHashMap
 ```
 public class Test {
-    Node[] table;
+    //注意要加volatile
+    volatile Node[] table;
     put(K key, V value){
         idx = hash(key.hashcode);
         putVal(table, idx, key, value);
@@ -71,10 +73,14 @@ public class Test {
         int hash;
         K key;
         V value;
+        Node<K, V> next;
     }
     putVal(hash, key, value){
         idx = hash;
         if(table[idx] == null){
+            //虽然说table加了volatile，但是只是这个数组类的reference有内存可见性
+            //但是它里面的元素是没有内存可见性的。
+            //所以用cas其实是保证了原子性和可见性，对于你现在操作的这个table[idx]来说
             casTabAt(table[idx], node);
         }else if(node hash == MOVED){
             helpTransfer();
@@ -109,7 +115,7 @@ public class Test {
     * 两个组件。basecount + conterCell数组（就相当于long和long[]）
     * 先CAS去加basecount。如果成功，那就最好，证明此时竞争挺小的，可能就我一个人。
     * fail，就去countercell[]里random选择一个去CAS加。
-    * 如果不是这种情况，是涉及总体的，比如countercell[]扩容或者初始化，或者countercell[idx]==null要初始化.
+    * 如果不是这种情况，是涉及总体的，比如countercell[]扩容或者初始化，或者countercell[idx]==null要初始化.（countercell是一个类，维护着一个long）
     * 就用cellbusy自旋锁，锁住全部（我倒想锁单个，没得锁啊，是空啊。就像你要绑绳子在牙齿上，但是你这颗牙齿没有，你只能绑嘴巴）。
     * 关于什么时候要扩容，这个还挺绕的。还没看大明白，指导思想是在竞争太大的时候扩容。
 * 问题就是来了，这里的addCount为什么要用CAS cellsbusy而不用synchronized
@@ -129,19 +135,22 @@ public class Test {
     * 那还有一个问题，如果用户这时有插入或者查询，会是怎么样。
     * 也就是说，扩容时候的锁机制是怎么样的。
     * 照理来说，扩容的时候，用户是不能插入的。果然，扩容的时候，是synchronized (f),锁住头节点。
+    * //这里有问题啊。扩容是虽然是一个一个槽位扩，但你扩完了如果有人又往你这个槽位放呢。就是我这个槽位扩完了，其他槽位没扩完啊。所以table的reference还没切过去
+    * //哦因为，在扩容的时候，相应bin的头节点会被放入MOVED标记，所以你要放数据的这个线程就会来先帮助扩容。
     * 也就是说，这个粒度还是以bin位单位。就是我扩容做到tab[4],我后面的tab[]都还是可以put的。不受影响。
     * 也就是说，用户put会发生三种情况
-        * 被在扩容的线程synchronized(f)住，啥都不做，等着
-        * 发现当前槽位上的是forwarding node，也就是说，我的put操作不行做，因为这个map在扩容，就去帮忙扩容
-        * 当前的这个槽位啥事没有（即使其实map在扩容，但暂时还没扩到这个位置），那他就去synchronized(f)，正常操作。
+        * 在扩容，当前槽位正在被搬运。被在扩容的线程synchronized(f)住，啥都不做，等着
+        * 在扩容，当前槽位已经被搬运结束，但其他槽位没结束。发现当前槽位上的是forwarding node，也就是说，我的put操作不行做，因为这个map在扩容，就去帮忙扩容。
+        * 无论在不在扩容，这个槽位还没被染指。当前的这个槽位啥事没有（即使其实map在扩容，但暂时还没扩到这个位置），那他就去synchronized(f)，正常操作。
     * get的话，其实除了用了getvolatile，其他什么限制也没有。就正常读
+        * 为什么？
+        * 因为getvolatile已经能保证可见性。不会读到脏数据
     * 然后如果是碰到forwarding节点。就通过forwarding节点去newTab里面找。
     * 因为new ForwardingNode<K,V>(nextTab)，forwarding里面其实就是放了newTab的地址。 
 * 扩容过程
     * 一个一个槽位地去扩容
     * 也是一样，synchronized (f),锁住头节点，然后去高低链分出来，放到new table里
     * 然后把头节点放成forwarding node。
-    * 本来以为这个forwarding node是 
 * 正在扩容时发生读写
     * 对写来说，就是上面说的三种情况
     * 对读来说，因为读除了getvolatile，其他不做任何限制。
@@ -156,7 +165,10 @@ public class Test {
     * 如果没有这个getObjectVolatile。可能就只读我自己缓存中的数据。是老的。别人更新了我也还没刷新看不见。
     * 所以它这个相当于是只加了写锁，没有加读锁。
 * 什么时候需要读锁?
-??????????????????????????????
+    * 考虑一下ReadWriteLock
+    * 这里面的WriteLock是对read也排斥的。
+    * 也就是我在写的时候，你也不能读。
+    * 但是对CHM来说，它的这个程度还是小一点。就是即使你在写，我也可以读。顶多是你写到一半的时候我去读，我读到之前的值，其实也是可接受的。
 * get有加锁吗,需要吗？
     * Node的value和nextNode都是volatile修饰，所以线程间是可见的
     * 这个数组也是加volatile的
@@ -167,7 +179,17 @@ public class Test {
         * 我这个线程应该是看不到。
         * 所以这可能是CHM用tabAt(getVolatile)的原因
         * 就会去主存拿，而不是拿自己缓存里面的可能已经老了的数据
-        
+
+#### 数组是放在哪里的
+* 数组是个对象。所以在堆里，你可以把Student A[]看作成以下Class As，就好理解了
+```
+Class As{
+    Student a1;
+    Student a2;
+    Student a3;
+    ...
+}
+```     
 
 ### LongAdder
 * AtomicLong不好吗？
@@ -195,7 +217,7 @@ public class Test {
     * 如果有线程要申请锁，就会来到entry set等着lock room里的人出来
     * lock room里面的线程一旦出来，就是release the monitor，所有在entry set里的线程就竞争进入，只有一个会成功
     * lock room里的线程，如果call了wait，就会进入wait set。
-    * 可能很多线程都在wait set里面
+    * 可能很多线程都在wait set里面//但是只可能是一个一个进入wait set，因为要进入wait set你首先得在lock room里
     * 只有等另外进入lock room里的某个线程，调用了notify/notify all，被notify的waitset里的线程，才会被移到entry set，有机会重新竞争lock room
     * 注意notify是选择wait set里的一个线程进入entry set
     * 而notify all是选择wait set里的所有线程进入entry set
@@ -276,12 +298,28 @@ class MyClass{
     * 这就是as if serial的语义。
     * synchronized是排他锁。所以在synchronized内部，肯定是单线程执行的
     * 所以在单线程下，cpu的重排序，只要是不影响在此单线程内的结果，就都是可以优化的。
-    * 所以，它并没有禁止指令重排。
+    * 所以，它并没有禁止指令重排。因为，它不需要啊（我在单线程的安全范围内，为什么要禁止指令重排）。
     * 举个例子，单例模式中，之所以会出现拿到半成品的结果
     * 就是因为其他的线程的“读”操作，没在synchronized里面。
     * 也就是说，我正经的流程，都在synchronied保护内，是单线程没错。
     * 但是会有很多线程偷偷在外面读这个共享变量（instance）的值
     * 所以我在“as if serial”的指导下的优化，对我自己来说是合理的。但是影响到了你。
+
+
+### Monitor和Mark Word
+* Java object header：Mark Word + klass pointer
+* 各自多大呢。从word可以看出，mark word就是一个word，所以如果在32bit机器的话就是32位。
+* mark word可能放了：用来做同步的锁的相关信息+GC的信息
+* 每个java object都有一个相关联的monitor对象。（至于它怎么做的我就不知道了）
+* mark word跟所有锁（偏向锁，轻量级，重量级）都相关
+* Monitor只跟重量级锁相关。
+* 偏向锁就是先把锁类型设作偏向，然后把自己的线程号cas写到mark word里（这个cas一定要成功，不成功就是有竞争了，就可能要升级到轻量级锁了）
+
+
+### 锁升级过程
+* https://blog.csdn.net/tongdanping/article/details/79647337
+* https://blog.csdn.net/weixin_40910372/article/details/107726978
+
 
 ### 同步的一些概念
 * wait和sleep的差别
@@ -291,13 +329,13 @@ class MyClass{
     
 * park和wait,和sleep的区别
 
-### 锁升级过程
-* https://blog.csdn.net/tongdanping/article/details/79647337
-
-      
+ 
 ### Synchronized和lock的区别
 
 ### AQS是什么东西
+* 是java里用来实现锁机制的一个基类
+* 主要的结构是，有一个int state。来代表这个锁现在有没有人在占用
+//TODO
 state, Node队列， 
 park， unpark
 cas(state)     
@@ -403,7 +441,10 @@ class MyCallable implements Callable<String> {
         * 还有也是丢弃，也不告诉用户，但是不是丢弃现在进来的，而是丢弃queue里最老的
         * 不开线程了，我当前这个线程直接去run
         * 自定义。重写rejectedExecution
-        
+
+### java四种线程池
+
+      
 ### java内存模型
 * 有哪几块
     * 线程公有的
