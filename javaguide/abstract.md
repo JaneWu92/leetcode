@@ -560,6 +560,7 @@ For each object p in heap
             * 对所有的markedBit做reset。
             * 相当于重置状态，因为下轮CMS是要用。
 * Promote mode failure vs Concurrent Mode Failure
+* https://www.jianshu.com/p/ca1b0d4107c5
     * Promote mode failure
         * 在进行minor GC的时候
         * survivor已经没空间存放所有copy过来的活着的对象
