@@ -73,10 +73,15 @@
             * postProcessAfterInstantiation
         * 然后applyPropertyValues:真正把属性注入进去
     * initializeBean
+        * initilizingBean
+        * init-method
 
+### populateBean
+* 准备PropertyValues
+    * 
+* applyPropertyValues
 
-
-
+### 循环依赖解决
 
 
 
