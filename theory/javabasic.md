@@ -197,6 +197,40 @@ global variable are declared outside any cuntion and can be accessed on any func
 
 
 
+### marker interface
+* 只有一个interface类，没有任何的方法
+* 是来表示某种元数据
+* 比如clonable和serializable
+* 相同的功能annotation也有。但是annotation是1.5才出来，之前可能就用marker interface
+#### Serializable
+* java有default的。你直接implement serializable什么也不做，就可以通过objectoutputstream去writeobject
+* 那些不想序列化的，用transient修饰
+* 想自定义序列化的，可以在类中加入private void writeObject(ObjectOutputSteam oos)
+    * 这样你用io流去写的时候，它会调用你这个方法。
+    * 但是这个东西蛮奇怪的，没有任何compile time的检查。像口头约定一样
+#### Clonable
+* 跟serializable差不多
+* Object里的protected native Object clone()
+    * clone出来的对象跟原始对象是两个independent的对象
+    * 但是field里，如果是reference type，就只是copy地址
+    * 即默认是浅克隆
+* 深拷贝要自己做
+    * 深拷贝也可以由**序列化**来做
+* 原型模式
+    * 用的就是这个deep copy的clone
+    * 然后根据你的需求去修改
+    * 好处是
+        * 隐藏你new一个instance的复杂性
+    
+
+
+
+
+
+
+
+
+
 
 
 
