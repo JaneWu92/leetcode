@@ -577,6 +577,134 @@ For each object p in heap
     
     
     
+
+### IO
+#### io interface
+io是，数据从internal storage到external io device的传输
+对于一个computer来说，cpu+memory是internal，其他的device都是external
+还有，cpu可以说是不存数据的。说到数据存放的地方，只会是要么internal的memory要么external的peripheral。
+但是，我们说到数据传输，肯定要有一个搬运工，不可能internal的memory的数据直接到external的device。这个搬运工就是cpu。
+我们说到的这个io interface就是指的是cpu和外设之间的数据传输的不同模式
+也就是说，传输虽然是在internal storage(memory)和external io device之间，但是一定要通过cpu间搭一座桥来传输
+cpu参与io可以说有两个部分，
+一个是检测你这个io module就绪没，一个是io设备就绪后，就开始数据传输
+比如，读操作，是一个input操作(外设)和一个store操作(内存)。
+
+programmed io
+interrupt io
+direct memory accesd
+
+programmed io
+检测设备和数据传输都要cpu的参与
+
+interrupt io
+检测设备不需要cpu盯着，设备就绪会发一个中断信号给cpu
+cpu响应，去处理后面的数据传输，这个数据传输全程需要cpu参与。
+
+DMA
+以上两种io interface，在data transfer（external device到internal memory）这个过程，都是经过cpu搭了一个通路，cpu需要全程参与。
+而DMA就是在这个过程直接把cpu拿掉
+由DMA Controller来控制memory到device的data transfer。完成后也是通过中断来通知cpu
+
+
+#### io model
+主要针对java的bio, nio, aio
+注意要跟上面的io interface区分开
+io interface是硬件到操作系统的interface，主要是在讲cpu和io设备在传输数据时候的模式
+而这个bio, nio, aio，主要讲的是，java编程模型这块
+它的对象是，一个函数的返回模式
+阻塞就是知道你这个操作做完了，我函数才返回。
+而非阻塞就跟java里的线程池的运行结果future一样
+我这个线程的任务，提交去做了，但是我这个调用不等到你做完才返回。
+而是马上返回。然后我后面可以自己什么时候再去check这个future的状态，去拿结果
+而阻塞就像outputstream的write一样。要全部写完，这个write的方法才返回。
+
+在讨论java io模型的时候，我们一般可以用networking io来做示范
+socket和server socket
+这两个是java在网络编程里最主要的两个接口
+serversocket.accept是一个阻塞的方法，也就是如果没有任何客户端的连接请求过来，他会一直等在那里。并且每次accept都只能接收一个request。想接收多个，就要调用accept方法多次。
+还有另外一个，是拿到socket连接后，通过socket拿到他的inputstream和outputstream，去读写，这个也是阻塞的。用户如果没有写，你也要等在那儿
+这个是bio的模型。
+也就是说如果你想要同时处理多个请求，就要在每次accept得到新的socket后，开启新线程去处理它。
+而对nio来说。accept和read，这两个方法，如果没有事件ready，你是都不用去等。
+也就说他想解决的，是阻塞在“等待设备就绪”这个步骤。
+API层面，是java提供了一个selector，可以在上面注册你关心的事件，比如你就去注册accept和read事件。然后你不用等在哪里，你可以在任何时间过来调用selector的getallready，可以得到所有这个时刻好了的事件。然后你就可以去处理了。
+但是要注意，这里的处理也是阻塞的。只是事件就绪这个不用等了，但是你真正accept建立connection和read的数据传输，还是仍然是阻塞的
+
+#### zero copy
+普通的比如要传文件的数据到网络上，会经过这些步骤：
+
+
+### Java运行时
+内存状态：分为线程共享和线程私有
+线程共享是，堆，method area
+线程私有是，栈，program counter，native stack
+堆是放所有对象的实例，
+method area是放所有的compiled code，还有静态类的实例，还有常量池。
+注意，java.lang.Class对象，还是在堆上！
+栈是放方法的调用关系还有局部变量
+pc是放每个线程所在执行的代码行
+native stack是放本地方法的调用关系还有局部变量的引用
+
+#### 类加载
+Bootstrap classloader
+extension classloader
+app classloader
+以上是通过组合的方式，不是继承的方式。
+
+
+#### heap与垃圾回收
+CMS和G1
+
+CMS
+initial mark
+concurrent mark
+remark
+concurrent sweep
+concurrent reset
+步骤详情：
+initial mark和remark是cms里面唯二的两个stop the world
+initial mark是从gc root开始扫描，扫描到老年代并且标记，就停
+为什么是老年代？年轻代不用标记吗？
+对，不用。因为cms本来就是在老年代做的。对应的年轻代应该是parallel new
+
+#### gc roots有哪些
+栈上的所有reference
+所有静态变量
+
+cms的缺点：
+耗cpu，浮动垃圾，碎片比较多
+耗cpu：因为和用户线程一起工作，会抢占cpu资源
+浮动垃圾：即使你最后一个remark是stop the world，但是mark过后还有sweep。
+所以这个浮动是指针对整个cms流程结束，有浮动垃圾。
+浮动垃圾只能等下一轮的垃圾回收再去收集
+
+concurrent mode failure
+因为cms是和application线程一起跑，所以会出现说，application发现这个内存情况不能满足我正常的对象创建了。这时候就会导致这个cms停止。因为你这个方案行不通了呀。
+这种cms被外力提前中断，就是concurrent mode failure
+一般有两种情况，一种是空的还挺多，但是都是碎片，装不下正常大小的对象
+一种是application对象产生的实在太快了，空的是真的不多了
+
+promotion failed
+是年轻代的垃圾回收算法report的。比如跟cms配套的parnew。
+就是年轻代的对象要被promote到老年代，发现没地方放。
+一个是可能确实没地方，一个可能是有地方，但是碎片太多了。
+
+
+cms什么时候被触发
+
+G1垃圾收集器
+逻辑分代。
+不用和其他垃圾收集器配合使用。
+因为他自己就包含了年轻代和老年代的算法。
+年轻代用par mark and copy
+老年代用跟cms差不多的算法。
+
+
+
+
+
+
     
     
     
